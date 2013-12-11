@@ -1,6 +1,6 @@
 export cg
 
-function cg(A,b,tol=1e-2,maxIter=100,M=1,x=[],out=0)
+function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=1,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # (Preconditioned) Conjugate Gradient applied to the linear system A*x = b

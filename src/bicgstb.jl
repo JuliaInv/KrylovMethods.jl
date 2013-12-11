@@ -1,6 +1,6 @@
 export bicgstb
 
-function   bicgstb(A, b, tol=1e-6, maxIter=100, M1=1.0, M2=1.0,x=[],out=0)
+function   bicgstb(A, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=1.0, M2=1.0,x::Vector=[],out::Int=0)
 # x, flag, err, iter,resvec = bicgstb(A, b, tol=1e-6, maxIter=100, M1=1.0, M2=1.0,x=[],out=0)
 #
 # BiConjugate Gradient Stabilized Method applied to the linear system Ax=b 
@@ -85,7 +85,7 @@ for iter = 1:maxIter
     t     = Af(s_hat)   # compute A*shat
     
 	omega = ( dot(t,s)) / ( dot(t,t) )
-    x = x + alpha*p_hat + omega*s_hat
+    x += alpha*p_hat + omega*s_hat
     r = s - omega*t
 
     err = norm( r ) / bnrm2

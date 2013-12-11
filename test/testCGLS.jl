@@ -10,10 +10,10 @@ rhs = randn(100)
 
 xgt = (A'*A)\(A'*rhs)
 
-xt  = cgls(A,rhs,1e-20)
-xt2  = cgls(A,rhs,1e-20,100,randn(size(xt[1])))
-xf  = cgls(Af,rhs,1e-20)
-Xt  = cgls(A,rhs,1e-20,100,[],1)
+xt  = cgls(A,rhs,tol=1e-20)
+xt2  = cgls(A,rhs,tol=1e-20,maxIter=100,x=randn(size(xt[1])))
+xf  = cgls(Af,rhs,tol=1e-20)
+Xt  = cgls(A,rhs,tol=1e-20,maxIter=100,interm=1)
 
 @test norm(xgt-xt[1])/norm(xgt) < 1e-6
 @test norm(xt[1]-xf[1])/norm(xf[1]) < 1e-15

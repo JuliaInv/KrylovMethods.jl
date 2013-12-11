@@ -9,10 +9,10 @@ Af(x) = A*x
 M(x)  = D.\x
 rhs = randn(100)
 
-x1 = bicgstb(A,rhs,1e-6)
-x2 = bicgstb(Af,rhs,1e-6)
-x3 = bicgstb(Af,rhs,1e-6,100,1.0,1.0,randn(size(rhs)))
-x5 = bicgstb(Af,rhs,1e-6,100,M)
+x1 = bicgstb(A,rhs,tol=1e-6)
+x2 = bicgstb(Af,rhs,tol=1e-6)
+x3 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,x=randn(size(rhs)))
+x5 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,M1=M)
 
 @test norm(A*x1[1]-rhs)/norm(rhs) < 1e-6
 @test norm(A*x2[1]-rhs)/norm(rhs) < 1e-6
@@ -28,10 +28,10 @@ Af(x) = A*x
 M(x)  = D.\x
 rhs = randn(100)
 
-x1 = bicgstb(A,rhs,1e-6)
-x2 = bicgstb(Af,rhs,1e-6)
-x3 = bicgstb(Af,rhs,1e-6,100,1.0,1.0,randn(size(rhs)))
-x4 = bicgstb(Af,rhs,1e-6,100,M)
+x1 = bicgstb(A,rhs,tol=1e-6)
+x2 = bicgstb(Af,rhs,tol=1e-6)
+x3 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,x=randn(size(rhs)))
+x4 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,M1=M)
 
 @test norm(A*x1[1]-rhs)/norm(rhs) < 1e-6
 @test norm(A*x2[1]-rhs)/norm(rhs) < 1e-6

@@ -1,6 +1,6 @@
 export cgls
 
-function cgls(A,b,tol=1e-2,maxIter=100,x=[],interm=0,out=0)
+function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,x=[],interm=0,out=0)
 #
 # CGLS Conjugate gradient algorithm applied implicitly to the normal equations 
@@ -27,7 +27,7 @@ function cgls(A,b,tol=1e-2,maxIter=100,x=[],interm=0,out=0)
 #   rho     - norm of current iterate: norm(x)
 
 Af(x)  =  isa(A,Function) ? A(x,'F') : A*x
-ATf(x) =  isa(A,Function) ? A(x,'T') : vec(x'*A) # use that A'*x = (x'*A)' for speedup
+ATf(x) =  isa(A,Function) ? A(x,'T') : A'*x
 
 # Initialization.
 if isempty(x)
@@ -62,12 +62,12 @@ for iter=1:maxIter
   Ag = Af(g) # compute A*g
   
   alpha = normGc/dot(Ag,Ag)
-  x  = x + alpha*g
+  x    += alpha*g
   if interm==1
     X[:,iter] = x
   end
 
-  r  = r - alpha*Ag
+  r  -= alpha*Ag
   g  = ATf(r) # compute A'*r
   
   normGt = dot(g,g)
@@ -76,7 +76,7 @@ for iter=1:maxIter
       break
   end
   beta = normGt/normGc
-  g = g + beta*g
+  g += beta*g
 
   # store intermediates and report resuls
   normGc = normGt

@@ -1,6 +1,6 @@
 export gmres
 
-function gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1.0,x=[],out=0)
+function gmres(A,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M=1.0,x::Vector=[],out::Int=0)
 # x, flag, err, iter, resvec = gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # Generalized Minimal residual ( GMRESm ) method with restarts applied to A*x = b.
@@ -77,10 +77,10 @@ cnt = 1
 flag = -1
 iter = 1
 # begin iteration
+r = b - Af(x) 
+r = Mf(r)
+
 for iter = 1:maxIter
-    r = b - Af(x) 
-    r = Mf(r)
-   
     V[:,1] = r / norm( r )
     s = norm( r )*e1;  
     # if iseltype(b,Complex); s = complex(s); end
@@ -94,7 +94,7 @@ for iter = 1:maxIter
 		# basis using Gram-Schmidt
         for k = 1:i
 		   H[k,i] = dot(w,V[:,k])
-           w = w - H[k,i]*V[:,k]
+           w -= H[k,i]*V[:,k]
         end
         H[i+1,i] = norm( w )
         V[:,i+1] = w / H[i+1,i]
@@ -107,9 +107,8 @@ for iter = 1:maxIter
 
         # Approximate residual norm
         cs[i],sn[i] = rotmat( H[i,i], H[i+1,i] )
-        temp   = cs[i]*s[i]
         s[i+1] = -sn[i]*s[i]
-        s[i]   = temp
+        s[i]   = cs[i]*s[i]
         H[i,i] = cs[i]*H[i,i] + sn[i]*H[i+1,i]
         H[i+1,i] = 0.0
         err  = abs(s[i+1]) / bnrm2
@@ -120,7 +119,7 @@ for iter = 1:maxIter
         
         if err <= tol
             y = H[1:i,1:i] \ s[1:i]
-            x = x + V[:,1:i]*y
+            x += V[:,1:i]*y
 			if out==2; print("\n"); end
 			flag = 0; break
         end
@@ -131,8 +130,9 @@ for iter = 1:maxIter
 		break
     end
     y = H[1:restrt,1:restrt] \ s[1:restrt]
-    x = x + V[:,1:restrt]*y
-    r = b - Af(x)
+    x += V[:,1:restrt]*y
+    
+	r = b - Af(x)
     r = Mf(r)
     
 	s[restrt+1] = norm(r)

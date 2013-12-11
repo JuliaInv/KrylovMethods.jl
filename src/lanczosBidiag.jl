@@ -1,7 +1,7 @@
 export lanczosBidiag
 
-function lanczosBidiag(A,p::Vector,k::Int64)
-# U, B, V =  lanczosBidiag(A,p::Vector,k::Int64)
+function lanczosBidiag(A,p::Vector,k::Int)
+# U, B, V =  lanczosBidiag(A,p::Vector,k::Int)
 #
 # Lanczos bidiagonalization of matrix A
 #
@@ -16,7 +16,7 @@ function lanczosBidiag(A,p::Vector,k::Int64)
 #   U,B,V   - solution
 
 Af(x)  =  isa(A,Function) ? A(x,'F') : A*x
-ATf(x) =  isa(A,Function) ? A(x,'T') : vec(x'*A) # use that A'*x = (x'*A)' for speedup
+ATf(x) =  isa(A,Function) ? A(x,'T') : A'*x
 
 # Initialization.
 m      = length(p)
@@ -44,7 +44,7 @@ for i=1:k
 
     # reorthogonalization of V
     for j=1:i-1
-        r = r - dot(V[:,j],r)*V[:,j]
+        r -= dot(V[:,j],r)*V[:,j]
     end
 
     alpha = norm(r)

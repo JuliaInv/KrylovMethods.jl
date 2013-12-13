@@ -1,6 +1,6 @@
 export gmres
 
-function gmres(A,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M=1.0,x::Vector=[],out::Int=0)
+function gmres(A,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M=x->x,x::Vector=[],out::Int=0)
 # x, flag, err, iter, resvec = gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # Generalized Minimal residual ( GMRESm ) method with restarts applied to A*x = b.
@@ -18,20 +18,18 @@ function gmres(A,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M=1.0,x:
 #
 # Output:
 #
-#   x       - solution
+#   x       - approximate solution
 #   flag    - exit flag (  0 : desired tolerance achieved,
 #                         -1 : maxIter reached without converging)
-#   err     - error, i.e., norm(A*x-b)/norm(b)
+#   err     - norm of relative residual, i.e., norm(A*x-b)/norm(b)
 #   iter    - number of iterations
-#   resvec  - error at each iteration    resvec = zeros(maxIter)
+#   resvec  - norm of relative residual at each iteration
 
-Af(x) =  isa(A,Function) ? A(x) : A*x
-Mf(x) =  isa(M,Function) ? M(x) : M\x
+Af =  isa(A,Function) ? A : x->A*x
+Mf =  isa(M,Function) ? M : x->M\x
 
 # initialization
 n  = length(b)
-iter = 0
-flag = 0
 
 if isempty(x)
 	x = zeros(n)
@@ -66,21 +64,18 @@ if iseltype(b,Complex) || iseltype(r,Complex) || iseltype(A,Complex)
 	sn = complex(sn)
 end
 
-resvec = zeros(restrt*maxIter)
+resvec = zeros((1+restrt)*maxIter)
 
 if out==2
     println("=== gmres ===")
 	println(@sprintf("%4s\t%7s","iter","relres"))
 end
 
-cnt = 1
+iter = 0
 flag = -1
-iter = 1
-# begin iteration
-r = b - Af(x) 
-r = Mf(r)
-
+cnt = 1
 for iter = 1:maxIter
+	
     V[:,1] = r / norm( r )
     s = norm( r )*e1;  
     # if iseltype(b,Complex); s = complex(s); end
@@ -154,6 +149,7 @@ end
 return x,flag,resvec[cnt],iter,resvec[1:cnt]
 
 end
+
 
 function rotmat( a, b )
 #  [c,s] = rotmat(a,b)

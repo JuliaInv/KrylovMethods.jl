@@ -15,8 +15,8 @@ function lanczosBidiag(A,p::Vector,k::Int)
 #
 #   U,B,V   - solution
 
-Af(x)  =  isa(A,Function) ? A(x,'F') : A*x
-ATf(x) =  isa(A,Function) ? A(x,'T') : A'*x
+Af  =  isa(A,Function) ? x->A(x,'F') : x->A*x
+ATf =  isa(A,Function) ? x->A(x,'T') : x->A'*x
 
 # Initialization.
 m      = length(p)

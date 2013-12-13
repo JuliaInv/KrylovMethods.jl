@@ -19,15 +19,15 @@ function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::
 #
 # Output:
 #
-#   x       - final solution (interm==0) or solution history (interm==1)
+#   x       - approximate solution (interm==0) or history of approximate solutions (interm==1)
 #   flag    - exit flag (  0 : desired tolerance achieved,
 #                         -1 : maxIter reached without converging
 #                         -2 : Matrix A is not positive definite )
 #   eta     - residual norm: norm(A*x-b)
 #   rho     - norm of current iterate: norm(x)
 
-Af(x)  =  isa(A,Function) ? A(x,'F') : A*x
-ATf(x) =  isa(A,Function) ? A(x,'T') : A'*x
+Af  =  isa(A,Function) ? x->A(x,'F') : x->A*x
+ATf =  isa(A,Function) ? x->A(x,'T') : x->A'*x
 
 # Initialization.
 if isempty(x)
@@ -51,12 +51,13 @@ eta    = zeros(maxIter) # norm of residuals
 rho    = zeros(maxIter) # norm or current iterate
  
 # Iterate.
-iter = 1
 flag = -1
 if out==2
 	println("=== cgls ===")
 	println(@sprintf("%4s\t%8s\t%8s","iter","norm(r)","norm(x)"))
 end
+
+iter = 1 # makes iter available outside the loop
 for iter=1:maxIter
 
   Ag = Af(g) # compute A*g
@@ -71,7 +72,7 @@ for iter=1:maxIter
   g  = ATf(r) # compute A'*r
   
   normGt = dot(g,g)
-  if normGt/normG0 < tol
+  if normGt/normG0 <= tol
 	  flag = 0
       break
   end
@@ -80,17 +81,17 @@ for iter=1:maxIter
 
   # store intermediates and report resuls
   normGc = normGt
-  rho[iter] = norm(r)
-  eta[iter] = norm(x)
+  eta[iter] = norm(r)
+  rho[iter] = norm(x)
   if out==2
   	println(@sprintf("%3d\t%1.2e\t%1.2e", iter,rho[iter],eta[iter]))
   end
 end
 
 if flag==-1
-   println(@sprintf("cgls iterated maxIter (=%d) times but reached only norm %1.2e instead of tol=%1.2e.",maxIter,normGc/normG0,tol))
+   println(@sprintf("cgls iterated maxIter (=%d) times witout reaching tolerance. Returned result has residual norm  %1.2e.",maxIter,eta[iter]))
 elseif out>=1
-   println(@sprintf("cgls achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,normGc/normG0))
+   println(@sprintf("cgls relative gradient norm below desired tolerance at iteration %d. Returned result has residual norm  %1.2e.",iter,eta[iter]))
 end
 
 if interm==1

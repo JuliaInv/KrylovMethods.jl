@@ -22,7 +22,7 @@ rhs = randn(size(A,1))
 tolCG = 1e-5
 # tests with A being matrix
 xCG,flagCG,relresCG,iterCG,resvecCG       = cg(A,rhs,tol=tolCG,maxIter=100)
-xJAC,flagJAC,relresJAC,iterJAC,resvecJAC  = cg(A,rhs,tol=tolCG,maxIter=100,M=JAC)
+xJAC,flagJAC,relresJAC,iterJAC,resvecJAC  = cg(A,rhs,tol=tolCG,maxIter=100,M=JAC,out=1)
 xSGS,flagSGS,relresSGS,iterSGS,resvecSGS  = cg(A,rhs,tol=tolCG,maxIter=100,M=SGS)
 # tests with A being function
 xCGmf,flagCG,relresCG,iterCG,resvecCG       = cg(Af,rhs,tol=tolCG,maxIter=100)

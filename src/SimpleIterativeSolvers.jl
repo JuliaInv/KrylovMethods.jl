@@ -4,6 +4,5 @@ module SimpleIterativeSolvers
 	include("bicgstb.jl")
 	include("gmres.jl")	
 	include("lanczosBidiag.jl")
-	include("sor.jl")
-	
+	include("sor.jl")	
 end

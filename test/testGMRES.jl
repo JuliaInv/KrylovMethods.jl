@@ -1,7 +1,6 @@
 using SimpleIterativeSolvers
 using Base.Test
 
-
 println("=== Testing gmres for real matrix === ")
 A  = sprandn(100,100,.1) + 10*speye(100)
 D  = diag(A)

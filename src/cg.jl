@@ -64,8 +64,6 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 		end
 		if resvec[iter] <= tol
 			flag = 0; break
-		elseif (iter>1) && (resvec[iter]>=resvec[iter-1])
-			flag = -3; break
 		end
 		
 		z    = Mf(r)
@@ -74,11 +72,9 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 	end
 	
 	if flag==-1
-		println(@sprintf("cg iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",resvec[iter],maxIter,tol))
+		println(@sprintf("cg iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",maxIter,resvec[iter],tol))
 	elseif flag==-2
 		println("Matrix A in cg has to be positive definite.")
-	elseif flag==-3
-		println("cg stalled: Two consecutive residuals have same norm.")
 	elseif flag==0 && out>=1
 		println(@sprintf("cg achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))
 	end

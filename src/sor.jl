@@ -1,7 +1,7 @@
-export sor, fwdTriSolveOmega, bwdTriSolveOmega
+export sor, fwdTriSolveOmega!, bwdTriSolveOmega!
 
-function fwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
-# x = fwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
+function fwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
+# x = fwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 #
 # Solves ((1./omega)*diag(A)+tril(A,1)) * x = b by forward substitution.
 #
@@ -22,10 +22,7 @@ function fwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 	ncol,nrow = size(A)
 	if ncol!=nrow; error("A must be square"); end;
 	if n!=ncol; error("Size of A and b do not match."); end;
-	
-	x = zeros(n)
-	if iseltype(b,Complex); x = complex(x); end
-	
+
 	aa = A.nzval
 	ja = A.rowval
 	ia = A.colptr
@@ -35,17 +32,17 @@ function fwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 		i2 = ia[j+1]-1
 		for i = i1:i2
 			if ja[i] == j
-				x[j] = (b[j]-x[j])/(omegaInv*aa[i])
+				b[j] /= (omegaInv*aa[i])
 			elseif ja[i] > j
-				x[ja[i]] += aa[i]*x[j]
+				b[ja[i]] -= aa[i]*b[j]
 			end
 		end
 	end
-	return x
-end
+	return b
+	end
 
-function bwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
-# x = bwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
+function bwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
+# x = bwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 #
 # Solves ((1./omega)*diag(A)+triu(A,-1)) * x = b by backward substitution.
 #
@@ -66,26 +63,22 @@ function bwdTriSolveOmega(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 	if ncol!=nrow; error("A must be square"); end;
 	if n!=ncol; error("Size of A and b do not match."); end;
 	
-	x = zeros(n)
-	if iseltype(b,Complex); x = complex(x); end
-	
 	omegaInv = 1.0/omega
 	aa = A.nzval
 	ja = A.rowval
 	ia = A.colptr
-	
 	for j=n:-1:1
 		i1 = ia[j]
 		i2 = ia[j+1]-1
 		for i = i2:-1:i1
 			if ja[i]==j
-				x[j] = (b[j]-x[j])/(omegaInv*aa[i])
+				b[j] /= (omegaInv*aa[i])
 			elseif ja[i]<j
-				x[ja[i]] += aa[i]*x[j]
+				b[ja[i]] -= aa[i]*b[j]
 			end
 		end
 	end
-	return x
+	return b
 end
 
 function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::Int=1, x::Vector=[],out::Int=0)
@@ -130,9 +123,9 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 	iter = 1
 	flag = -1
 	for iter=1:maxIter
-		dx = bwdTriSolveOmega(A,r,omega)
+		dx = bwdTriSolveOmega!(A,copy(r),omega)
 		dx = dx.*d
-		dx = fwdTriSolveOmega(A,dx,omega)
+		fwdTriSolveOmega!(A,dx,omega)
 		dx = (2-omega)*dx
 		
 		x += dx
@@ -146,7 +139,7 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 	end
 	
 	if flag==-1
-		println(@sprintf("sor iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",resvec[iter],maxIter,tol))
+		println(@sprintf("sor iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",maxIter,resvec[iter],tol))
 	elseif  out==1
 		println(@sprintf("sor achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))
 	end

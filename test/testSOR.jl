@@ -10,11 +10,11 @@ U = triu(A,1)
 omega = .87
 rhs = randn(100)
 
-x1 = bwdTriSolveOmega(A,rhs,omega)
+x1 = bwdTriSolveOmega!(A,copy(rhs),omega)
 xgt = ((1./omega)*D + U)\ rhs
 @test norm(x1-xgt)/norm(xgt) < 1e-15
 
-x1 = fwdTriSolveOmega(A,rhs,omega)
+x1 = fwdTriSolveOmega!(A,copy(rhs),omega)
 xgt = ((1./omega)*D + L)\ rhs
 @test norm(x1-xgt)/norm(xgt) < 1e-15
 

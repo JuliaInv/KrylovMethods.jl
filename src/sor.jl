@@ -38,7 +38,7 @@ function fwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 			end
 		end
 	end
-	return b
+	nothing
 	end
 
 function bwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
@@ -78,7 +78,7 @@ function bwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 			end
 		end
 	end
-	return b
+	nothing
 end
 
 function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::Int=1, x::Vector=[],out::Int=0)
@@ -96,7 +96,7 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 #	tol     - error tolerance
 #	maxIter - maximum number of iterations
 #	x       - starting guess
-#	out     - flag for output (0 : only errors, 1 : final status, 2: error at each iteration)
+#	out     - flag for output (-1 : no output, 0 : only errors, 1 : final status, 2: error at each iteration)
 #
 # Output:
 #
@@ -108,9 +108,8 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 #	resvec  - error at each iteration
 
 	n    = size(A,1)
-	x    = zeros(n)
-	dx   = zeros(n)
-	r    = zeros(n)
+	x    = zeros(eltype(A),n)
+	r    = zeros(eltype(A),n)
 	for i=1:n; r[i] = b[i]; end;
 	r0   = norm(b)
 	d    = (1/omega)*diag(A)
@@ -123,13 +122,13 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 	iter = 1
 	flag = -1
 	for iter=1:maxIter
-		dx = bwdTriSolveOmega!(A,copy(r),omega)
-		dx = dx.*d
-		fwdTriSolveOmega!(A,dx,omega)
-		dx = (2-omega)*dx
+		bwdTriSolveOmega!(A,r,omega)
+		r .*= d
+		fwdTriSolveOmega!(A,r,omega)
+		r *= (2-omega)
 		
-		x += dx
-		r  = b - A*x
+		x += r
+		r = b - A*x
 		
 		resvec[iter] = norm(r)/r0
 		if out==2; println(@sprintf("%3d\t%1.2e",iter,resvec[iter]));end
@@ -138,7 +137,7 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 		end
 	end
 	
-	if flag==-1
+	if (flag==-1) && (out>=0)
 		println(@sprintf("sor iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",maxIter,resvec[iter],tol))
 	elseif  out==1
 		println(@sprintf("sor achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))

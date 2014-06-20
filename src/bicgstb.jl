@@ -13,7 +13,7 @@ function bicgstb(A, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=1.0, M2=1.0,
 #	maxIter - maximum number of iterations
 #	M1,M2   - preconditioners, either matrices or function computing M1\x or M2\x
 #	x       - starting guess
-#	out     - flag for output (0 : only errors, 1 : final status, 2: relres at each iteration)
+#	out     - flag for output (-1: no output, 0 : only errors, 1 : final status, 2: relres at each iteration)
 #
 # Output:
 #
@@ -101,16 +101,18 @@ function bicgstb(A, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=1.0, M2=1.0,
 		end
 		rho_1 = rho
 	end
-	if flag==-1
-		println(@sprintf("bicgstb iterated maxIter (=%d) times without achieving the desired tolerance.",maxIter))
-	elseif flag==-2
-		println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
-	elseif flag==-3
-		println(@sprintf("bicgstb : norm(s)/bnrm2 < tol."))
-	elseif flag==-4
-		println(@sprintf("bicgstb : omega < 1e-16"))
-	elseif out>=1
-		println(@sprintf("cg achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+	if out>=0
+		if flag==-1
+			println(@sprintf("bicgstb iterated maxIter (=%d) times without achieving the desired tolerance.",maxIter))
+		elseif flag==-2
+			println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
+		elseif flag==-3
+			println(@sprintf("bicgstb : norm(s)/bnrm2 < tol."))
+		elseif flag==-4
+			println(@sprintf("bicgstb : omega < 1e-16"))
+		elseif out>=1
+			println(@sprintf("bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+		end
 	end
 	return x, flag,resvec[iter+1],iter,resvec[1:iter+1]
 end

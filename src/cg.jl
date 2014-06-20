@@ -14,7 +14,7 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 #	maxIter - maximum number of iterations
 #	M       - preconditioner, either matrix or function computing M\x
 #	x       - starting guess
-#	out     - flag for output (0: only errors, 1: final status, 2: residual norm at each iteration)
+#	out     - flag for output (-1: no output, 0: only errors, 1: final status, 2: residual norm at each iteration)
 #
 # Output:
 #
@@ -71,12 +71,15 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 		p    = z + beta*p
 	end
 	
-	if flag==-1
-		println(@sprintf("cg iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",maxIter,resvec[iter],tol))
-	elseif flag==-2
-		println("Matrix A in cg has to be positive definite.")
-	elseif flag==0 && out>=1
-		println(@sprintf("cg achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))
+	if out>=0
+		if flag==-1
+			println(@sprintf("cg iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
+																								maxIter,resvec[iter],tol))
+		elseif flag==-2
+			println("Matrix A in cg has to be positive definite.")
+		elseif flag==0 && out>=1
+			println(@sprintf("cg achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))
+		end
 	end
 	return x,flag,resvec[iter],iter,resvec[1:iter]
 end

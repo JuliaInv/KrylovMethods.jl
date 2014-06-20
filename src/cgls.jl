@@ -15,7 +15,7 @@ function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::
 #	maxIter - maximum number of iterations, default 100
 #	x       - starting guess
 #	interm  - flag for returning intermediate solutions (useful in inverse 
-#	out     - flag for output (0 : only errors, 1 : final status, 2: error at each iteration)
+#	out     - flag for output (-1: no output, 0 : only errors, 1 : final status, 2: error at each iteration)
 #
 # Output:
 #
@@ -83,10 +83,14 @@ function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::
 		if out==2;  println(@sprintf("%3d\t%1.2e\t%1.2e",iter,rho[iter],eta[iter]));end
 	end
 	
-	if flag==-1
-		println(@sprintf("cgls iterated maxIter (=%d) times witout reaching tolerance. Returned result has residual norm  %1.2e.",maxIter,eta[iter]))
-	elseif out>=1
-		println(@sprintf("cgls relative gradient norm below desired tolerance at iteration %d. Returned result has residual norm  %1.2e.",iter,eta[iter]))
+	if out>=0
+		if flag==-1
+			println(@sprintf("cgls iterated maxIter (=%d) times witout reaching tolerance. Returned result has residual norm  %1.2e.",
+																													maxIter,eta[iter]))
+		elseif out>=1
+			println(@sprintf("cgls relative gradient norm below desired tolerance at iteration %d. Returned result has residual norm  %1.2e.",
+																													iter,eta[iter]))
+		end
 	end
 	
 	if interm==1

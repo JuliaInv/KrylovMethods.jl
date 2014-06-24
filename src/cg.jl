@@ -1,5 +1,7 @@
 export cg
 
+cg(A::Array,b::Vector;kwargs...) = cg(x->A*x,b::Vector;kwargs...)
+
 function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
@@ -27,7 +29,8 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 #	iter    - number of iterations
 #	resvec  - norm of relative residual at each iteration
 	
-	Af =  isa(A,Function) ? A : x->A*x
+	Ap = zeros(eltype(b),length(b)) # allocate vector for A*x once to save allocation time
+	Af =  isa(A,Function) ? A : x->A_mul_B!(1.0,A,x,0.0,Ap)
 	Mf =  isa(M,Function) ? M : x->M\x
 	
 	if isempty(x)
@@ -36,6 +39,7 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 	else
 		r = b - Af(x)
 	end
+	n = length(b)
 	
 	z = Mf(r)
 	p = z
@@ -49,6 +53,7 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 	resvec = zeros(maxIter)
 	iter   = 1 # makes iter available outside the loop
 	flag   = -1
+	
 	for iter=1:maxIter
 		Ap = Af(p)
 		gamma = dot(r,z)
@@ -56,8 +61,10 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 		if alpha==Inf || alpha<0
 			flag = -2; break
 		end
-		x += alpha*p
-		r -= alpha*Ap
+		
+		axpy!(n,alpha,p,1,x,1) # x = alpha*p+x	
+		# axpy!(n,-alpha,Ap,1,r,1) # r -= alpha*Ap 
+		r -= alpha*Ap 
 		resvec[iter]  = norm(r)/nr0
 		if out==2
 			println(@sprintf("%3d\t%1.2e",iter,resvec[iter]))
@@ -68,7 +75,11 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 		
 		z    = Mf(r)
 		beta = dot(z,r)/gamma
-		p    = z + beta*p
+		# equivalent to p = z + beta*p
+		p = beta*p + z
+		# p = scal!(n,beta,p,1)
+		# p = axpy!(n,1.0,z,1,p,1)
+		
 	end
 	
 	if out>=0

@@ -4,8 +4,8 @@ include("getDivGrad.jl")
 
 println("=== Testing CG ===")
 # small full system
-A = [4 1; 1 4]
-rhs = [2;2]
+A = [4.0 1; 1 4]
+rhs = [2.0;2]
 x,flag,relres,iter,resvec = cg(A,rhs,tol=1e-15,out=2)
 @test norm(A*x-rhs)/norm(rhs) <= 1e-15
 

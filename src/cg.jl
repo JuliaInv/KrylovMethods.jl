@@ -28,23 +28,22 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 #	err     - norm of relative residual, i.e., norm(A*x-b)/norm(b)
 #	iter    - number of iterations
 #	resvec  - norm of relative residual at each iteration
+	n = length(b)
 	
-	Ap = zeros(eltype(b),length(b)) # allocate vector for A*x once to save allocation time
+	Ap = zeros(eltype(b),n) # allocate vector for A*x once to save allocation time
 	Af =  isa(A,Function) ? A : x->A_mul_B!(1.0,A,x,0.0,Ap)
 	Mf =  isa(M,Function) ? M : x->M\x
 	
 	if isempty(x)
-		x = zeros(size(b,1))
-		r = b
+		x = zeros(eltype(b),n)
+		r = copy(b)
 	else
 		r = b - Af(x)
-	end
-	n = length(b)
-	
+	end	
 	z = Mf(r)
-	p = z
-	nr0  = norm(b)
+	p = copy(z)
 	
+	nr0  = norm(b)	
 	if out==2
 		println("=== cg ===")
 		println(@sprintf("%4s\t%7s","iter","relres"))
@@ -62,9 +61,9 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 			flag = -2; break
 		end
 		
-		axpy!(n,alpha,p,1,x,1) # x = alpha*p+x	
-		# axpy!(n,-alpha,Ap,1,r,1) # r -= alpha*Ap 
-		r -= alpha*Ap 
+		BLAS.axpy!(n,alpha,p,1,x,1) # x = alpha*p+x	
+		BLAS.axpy!(n,-alpha,Ap,1,r,1) # r -= alpha*Ap 
+	
 		resvec[iter]  = norm(r)/nr0
 		if out==2
 			println(@sprintf("%3d\t%1.2e",iter,resvec[iter]))
@@ -75,10 +74,9 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 		
 		z    = Mf(r)
 		beta = dot(z,r)/gamma
-		# equivalent to p = z + beta*p
-		p = beta*p + z
-		# p = scal!(n,beta,p,1)
-		# p = axpy!(n,1.0,z,1,p,1)
+		# the following two lines are equivalent to p = z + beta*p
+		p = BLAS.scal!(n,beta,p,1)
+		p = BLAS.axpy!(n,1.0,z,1,p,1)
 		
 	end
 	

@@ -1,6 +1,6 @@
 module SimpleIterativeSolvers
 	
-	using Base.BLAS
+	import Base.BLAS
 
 	include("cg.jl")
 	include("cgls.jl")

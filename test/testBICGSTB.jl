@@ -4,8 +4,8 @@ using Base.Test
 println("=== Testing bicgstb for real matrix === ")
 A  = sprandn(100,100,.1) + 10*speye(100)
 D  = diag(A)
-Af(x) = A*x 
-M(x)  = D.\x
+Af(x,v) = A*x 
+M(x,v)  = D.\x
 rhs = randn(100)
 
 x1 = bicgstb(A,rhs,tol=1e-6)
@@ -23,14 +23,14 @@ x5 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,M1=M)
 println("Testing bicgstb for complex matrix")
 A  = sprandn(100,100,.1) + 10*speye(100) + im*(sprandn(100,100,.1) + 10*speye(100) )
 D  = diag(A)
-Af(x) = A*x 
-M(x)  = D.\x
-rhs = randn(100)
+Af(x,v) = A*x 
+M(x,v)  = D.\x
+rhs = randn(100) + 1im * randn(100)
 
 x1 = bicgstb(A,rhs,tol=1e-6)
 x2 = bicgstb(Af,rhs,tol=1e-6)
-x3 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,x=randn(size(rhs)))
-x4 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,M1=M)
+x3 = bicgstb(Af,rhs,tol=1e-6,maxIter=200,x=randn(size(rhs))+im*randn(size(rhs)))
+x4 = bicgstb(Af,rhs,tol=1e-6,maxIter=200,M1=M)
 
 @test norm(A*x1[1]-rhs)/norm(rhs) < 1e-6
 @test norm(A*x2[1]-rhs)/norm(rhs) < 1e-6

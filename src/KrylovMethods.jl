@@ -1,4 +1,4 @@
-module SimpleIterativeSolvers
+module KrylovMethods
 	
 	import Base.BLAS
 
@@ -9,5 +9,4 @@ module SimpleIterativeSolvers
 	include("lanczosBidiag.jl")
 	include("sor.jl")	
 
-	
 end

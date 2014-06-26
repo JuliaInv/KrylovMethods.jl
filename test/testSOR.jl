@@ -1,4 +1,4 @@
-using SimpleIterativeSolvers
+using KrylovMethods
 using Base.Test
 include("getDivGrad.jl")
 

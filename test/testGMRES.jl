@@ -1,4 +1,4 @@
-using SimpleIterativeSolvers
+using KrylovMethods
 using Base.Test
 
 println("=== Testing gmres for real matrix === ")

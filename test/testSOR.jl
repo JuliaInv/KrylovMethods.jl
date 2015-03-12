@@ -13,12 +13,12 @@ rhs = randn(100)
 x1 = copy(rhs)
 bwdTriSolveOmega!(A,x1,omega)
 xgt = ((1./omega)*D + U)\ rhs
-@test norm(x1-xgt)/norm(xgt) < 1e-15
+@test norm(x1-xgt)/norm(xgt) < 1e-13
 
 x1 = copy(rhs)
 fwdTriSolveOmega!(A,x1,omega)
 xgt = ((1./omega)*D + L)\ rhs
-@test norm(x1-xgt)/norm(xgt) < 1e-15
+@test norm(x1-xgt)/norm(xgt) < 1e-13
 
 println("=== Testing Upper/Lower Tri solvers for complex matrix  ===")
 A = sprandn(100,100,.1) + speye(100) + 1im *speye(100)

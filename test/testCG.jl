@@ -1,5 +1,6 @@
 using KrylovMethods
 using Base.Test
+using LinearOperators
 include("getDivGrad.jl")
 
 println("=== Testing CG ===")
@@ -11,12 +12,14 @@ x,flag,relres,iter,resvec = cg(A,rhs,tol=1e-15,out=2)
 
 # CG: test sparse Laplacian
 A = getDivGrad(32,32,32)
-Af(x) = A*x
+Alinop = LinearOperator(A)
 L = tril(A)
 D = diag(A)
 U = triu(A)
-JAC(x) = D.\x
-SGS(x) = L\(D.*(U\x))
+n = size(A,1)
+JAC = LinearOperator(n,n,Float64,false,false,x -> D.\x,nothing, x -> D.\x)
+SGS = LinearOperator(n,n,Float64,false,false,x -> L\(D.*(U\x)),nothing, x -> L\(D.*(U\x)))
+
 
 rhs = randn(size(A,1))
 tolCG = 1e-5
@@ -25,12 +28,12 @@ xCG,flagCG,relresCG,iterCG,resvecCG       = cg(A,rhs,tol=tolCG,maxIter=100)
 xJAC,flagJAC,relresJAC,iterJAC,resvecJAC  = cg(A,rhs,tol=tolCG,maxIter=100,M=JAC,out=1)
 xSGS,flagSGS,relresSGS,iterSGS,resvecSGS  = cg(A,rhs,tol=tolCG,maxIter=100,M=SGS)
 # tests with A being function
-xCGmf,flagCG,relresCG,iterCG,resvecCG       = cg(Af,rhs,tol=tolCG,maxIter=100)
-xJACmf,flagJAC,relresJAC,iterJAC,resvecJAC  = cg(Af,rhs,tol=tolCG,maxIter=100,M=JAC)
-xSGSmf,flagSGS,relresSGS,iterSGS,resvecSGS  = cg(Af,rhs,tol=tolCG,maxIter=100,M=SGS)
+xCGmf,flagCG,relresCG,iterCG,resvecCG       = cg(Alinop,rhs,tol=tolCG,maxIter=100)
+xJACmf,flagJAC,relresJAC,iterJAC,resvecJAC  = cg(Alinop,rhs,tol=tolCG,maxIter=100,M=JAC)
+xSGSmf,flagSGS,relresSGS,iterSGS,resvecSGS  = cg(Alinop,rhs,tol=tolCG,maxIter=100,M=SGS)
 # tests with random starting guess
-xCGr,flagCGr,relresCGr,iterCGr,resvecCGr       = cg(Af,rhs,tol=tolCG,maxIter=100,x=randn(size(rhs)))
-xJACr,flagJACr,relresJACr,iterJACr,resvecJACr  = cg(Af,rhs,tol=tolCG,maxIter=100,M=JAC,x=randn(size(rhs)))
+xCGr,flagCGr,relresCGr,iterCGr,resvecCGr       = cg(Alinop,rhs,tol=tolCG,maxIter=100,x=randn(size(rhs)))
+xJACr,flagJACr,relresJACr,iterJACr,resvecJACr  = cg(Alinop,rhs,tol=tolCG,maxIter=100,M=JAC,x=randn(size(rhs)))
 xSGSr,flagSGSr,relresSGSr,iterSGSr,resvecSGSr  = cg(A,rhs,tol=tolCG,maxIter=100,x=randn(size(rhs)))
 
 # test relative residuals

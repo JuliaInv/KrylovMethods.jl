@@ -1,8 +1,19 @@
 export cg
 
-cg(A::Array,b::Vector;kwargs...) = cg(x->A*x,b::Vector;kwargs...)
 
-function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],out::Int=0)
+function cg{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}; kwargs...) 
+	x = zeros(T,size(A,2))
+
+	Alinop = LinearOperator(size(A,1),size(A,2),T,false,false,
+							v -> At_mul_B!(1.0,A,v,0.0,x),nothing,
+							v -> At_mul_B!(1.0,A,v,0.0,x))
+	return cg(Alinop,b;kwargs...)
+end
+
+cg(A::Array,b::Vector;kwargs...) = cg(LinearOperator(A),b::Vector;kwargs...)
+
+
+function cg(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::LinearOperator=opEye(length(b)) ,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # (Preconditioned) Conjugate Gradient applied to the linear system A*x = b, where A is assumed 
@@ -31,16 +42,14 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 	n = length(b)
 	
 	Ap = zeros(eltype(b),n) # allocate vector for A*x once to save allocation time
-	Af =  isa(A,Function) ? A : x->A_mul_B!(1.0,A,x,0.0,Ap)
-	Mf =  isa(M,Function) ? M : x->M\x
 	
 	if isempty(x)
 		x = zeros(eltype(b),n)
 		r = copy(b)
 	else
-		r = b - Af(x)
+		r = b - A*x
 	end	
-	z = Mf(r)
+	z = M*r
 	p = copy(z)
 	
 	nr0  = norm(b)	
@@ -54,7 +63,7 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 	flag   = -1
 	
 	for iter=1:maxIter
-		Ap = Af(p)
+		Ap = A*p
 		gamma = dot(r,z)
 		alpha = gamma/dot(p,Ap)
 		if alpha==Inf || alpha<0
@@ -72,7 +81,7 @@ function cg(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=x->x ,x::Vector=[],ou
 			flag = 0; break
 		end
 		
-		z    = Mf(r)
+		z    = M*r
 		beta = dot(z,r)/gamma
 		# the following two lines are equivalent to p = z + beta*p
 		p = BLAS.scal!(n,beta,p,1)

@@ -1,6 +1,21 @@
 export lanczosBidiag
 
-function lanczosBidiag(A,p::Vector,k::Int)
+function lanczosBidiag{T}(A::SparseMatrixCSC{T,Int64},p::Vector,k::Int) 
+	x1 = zeros(T,size(A,1))
+	x2 = zeros(T,size(A,2))
+	
+	Alinop = LinearOperator(size(A,1),size(A,2),T,false,false,
+							v -> A_mul_B!(1.0,A,v,0.0,x1),nothing,
+							v -> At_mul_B!(1.0,A,v,0.0,x2))
+	return lanczosBidiag(Alinop,p,k)
+end
+
+lanczosBidiag(A::Array,p::Vector,k::Int) = lanczosBidiag(LinearOperator(A),p,k)
+
+
+
+
+function lanczosBidiag(A::LinearOperator,p::Vector,k::Int)
 # U, B, V =  lanczosBidiag(A,p::Vector,k::Int)
 #
 # Lanczos bidiagonalization of matrix A.

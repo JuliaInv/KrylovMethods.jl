@@ -1,6 +1,20 @@
 export cgls
 
-function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
+function cgls{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}; kwargs...) 
+	x1 = zeros(T,size(A,1))
+	x2 = zeros(T,size(A,2))
+	
+	Alinop = LinearOperator(size(A,1),size(A,2),T,false,false,
+							v -> A_mul_B!(1.0,A,v,0.0,x1),nothing,
+							v -> At_mul_B!(1.0,A,v,0.0,x2))
+	return cgls(Alinop,b;kwargs...)
+end
+
+cgls(A::Array,b::Vector;kwargs...) = cgls(LinearOperator(A),b::Vector;kwargs...)
+
+
+
+function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,x=[],interm=0,out=0)
 #
 # CGLS Conjugate gradient algorithm applied implicitly to the normal equations 
@@ -26,19 +40,16 @@ function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::
 #	eta     - residual norm: norm(A*x-b)
 #	rho     - norm of current iterate: norm(x)
 	
-	Af  =  isa(A,Function) ? x->A(x,'F') : x->A*x
-	ATf =  isa(A,Function) ? x->A(x,'T') : x->A'*x
-	
 	# Initialization.
 	if isempty(x)
 		r = b			# residual r = A'*(A*x-b)
-		g = ATf(r)		# compute gradient g = A'*(A*x-b)
+		g = A'*r		# compute gradient g = A'*(A*x-b)
 		n = length(g)
 		x = zeros(n)
 	else
 		n = length(x)
-		r = b-Af(x)
-		g = ATf(r)
+		r = b-A*x
+		g = A'*r
 	end
 	
 	if interm==1
@@ -59,14 +70,14 @@ function cgls(A,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::
 	
 	iter = 1 # makes iter available outside the loop
 	for iter=1:maxIter
-		Ag    = Af(g) # compute A*g
+		Ag    = A*g # compute A*g
 		alpha = normGc/dot(Ag,Ag)
 		x    += alpha*g
 		
 		if interm==1; X[:,iter] = x; end
 		
 		r  -= alpha*Ag
-		g   = ATf(r) # compute gradient, that is A'*r
+		g   = A'*r # compute gradient, that is A'*r
 		
 		normGt = dot(g,g)
 		if normGt/normG0 <= tol

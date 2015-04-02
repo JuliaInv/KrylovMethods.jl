@@ -1,6 +1,7 @@
 module KrylovMethods
 	
 	import Base.BLAS
+	using LinearOperators
 
 	include("cg.jl")
 	include("cgls.jl")

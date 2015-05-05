@@ -40,14 +40,13 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 #	eta     - residual norm: norm(A*x-b)
 #	rho     - norm of current iterate: norm(x)
 	
+	m,n = size(A)
 	# Initialization.
 	if isempty(x)
 		r = copy(b)			# residual r = b - A*x
 		s = A'*r		# compute gradient g = A'*(A*x-b)
-		n = length(s)
 		x = zeros(n)
 	else
-		n = length(x)
 		r = b-A*x
 		s = A'*r
 	end
@@ -60,6 +59,7 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 	p      = copy(s)
 	normS0 = BLAS.dot(n,s,1,s,1)       # squared norm of gradients
 	normSc = normS0
+	Arn    = zeros(maxIter)
 	eta    = zeros(maxIter) # norm of residuals
 	rho    = zeros(maxIter) # norm or current iterate
 	
@@ -67,26 +67,25 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 	flag = -1
 	if out==2
 		println("=== cgls ===")
-		println(@sprintf("%4s\t%8s\t%8s","iter","norm(r)","norm(x)"))
+		println(@sprintf("%4s\t%8s\t%8s\t%8s","iter","|A'r|","norm(r)","norm(x)"))
 	end
 	
 	iter = 1 # makes iter available outside the loop
 	for iter=1:maxIter
 		q     = A*p # compute A*g
-		alpha = normSc/dot(q,q)
+		alpha = normSc/BLAS.dot(m,q,1,q,1)
 		BLAS.axpy!(n,alpha,p,1,x,1) # faster than x    += alpha*p
 		
 		if interm==1; X[:,iter] = x; end
 		
-		r-= alpha*q
-		# BLAS.axpy!(n,-alpha,q,1,r,1) # faster than r  -= alpha*q
-		# println("err2=$(norm(rt-r)/norm(rt))")
+		BLAS.axpy!(m,-alpha,q,1,r,1) # faster than r  -= alpha*q
 		s   = A'*r # compute gradient, that is A'*r
 		
 		normSt = BLAS.dot(n,s,1,s,1)
-		if normSt/normS0 <= tol
+		if (iter>1) && (normSt <= tol)
 		    eta = eta[1:iter-1]
 			rho = rho[1:iter-1]
+			Arn = Arn[1:iter-1]
 			flag = 0; break
 		end
 		
@@ -98,24 +97,25 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 		
 		# store intermediates and report resuls
 		normSc = normSt
-		eta[iter] = BLAS.nrm2(n,r,1) # faster than norm(r)
+		Arn[iter] = normSt
+		eta[iter] = BLAS.nrm2(m,r,1) # faster than norm(r)
 		rho[iter] = BLAS.nrm2(n,x,1) # faster than norm(x)
-		if out==2;  println(@sprintf("%3d\t%1.2e\t%1.2e",iter,rho[iter],eta[iter]));end
+		if out==2;  println(@sprintf("%3d\t%1.2e\t%1.2e\t%1.2e",iter,Arn[iter],rho[iter],eta[iter]));end
 	end
 	
 	if out>=0
 		if flag==-1
 			println(@sprintf("cgls iterated maxIter (=%d) times witout reaching tolerance. Returned result has residual norm  %1.2e.",
-																													maxIter,eta[end]))
+																													maxIter,Arn[end]))
 		elseif out>=1
 			println(@sprintf("cgls relative gradient norm below desired tolerance at iteration %d. Returned result has residual norm  %1.2e.",
-																													iter,eta[end]))
+																													iter,Arn[end]))
 		end
 	end
 	
 	if interm==1
-		return X[:,1:iter],flag,rho,eta
+		return X[:,1:iter],flag,rho,eta,Arn
 	else
-		return x,flag,rho,eta
+		return x,flag,rho,eta,Arn
 	end
 end

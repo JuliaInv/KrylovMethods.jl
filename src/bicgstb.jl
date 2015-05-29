@@ -68,7 +68,7 @@ function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(
 			flag = -2; break;
 		end
 		if ( iter > 1 )
-			beta  = ( rho/rho_1 )*( alpha/omega );
+			beta  = ( rho/rho_1 )*( alpha/omega )
 			# p = r + beta*( p - omega*v );
 			BLAS.scal!(n,beta,p,1)
 			BLAS.axpy!(n,-(beta*omega),v,1,p,1)

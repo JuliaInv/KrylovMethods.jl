@@ -12,7 +12,7 @@ x,flag,relres,iter,resvec = cg(A,rhs,tol=1e-15,out=2)
 @test norm(A*x-rhs)/norm(rhs) <= 1e-15
 
 # CG: test sparse Laplacian
-A = getDivGrad(32,32,32)
+A = getDivGrad(8,8,8)
 Alinop = LinearOperator(A)
 L = tril(A)
 D = diag(A)

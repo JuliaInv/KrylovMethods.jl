@@ -1,16 +1,21 @@
 export bicgstb
 
-# wrapper for sparse matrices
-bicgstb{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}; kwargs...) =  bicgstb((x,v) -> A_mul_B!(1.0,A,x,0.0,v),b; kwargs...)
+function bicgstb{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) 
+	Ax = zeros(promote_type(T1,T2),size(A,2))                  # pre-allocate
+	return bicgstb(x -> A_mul_B!(1.0,A,x,0.0,Ax),b;kwargs...) # multiply with transpose of A for efficiency
+end
 
-function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(x,v)->BLAS.blascopy!(length(b),x,1,v,1), M2=x->x,x::Vector=[],out::Int=0)
+bicgstb(A,b; kwargs...) =  bicgstb(x -> A*x,b; kwargs...)
+
+
+function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = bicgstb(A,b,tol=1e-6,maxIter=100,M1=1.0,M2=1.0,x=[],out=0)
 #
 # BiConjugate Gradient Stabilized Method applied to the linear system Ax=b. 
 #
 # Input:
 #
-#	A       - matrix or function computing A*x
+#	A       - computing A*x
 #	b       - right hand side vector
 #	tol     - error tolerance
 #	maxIter - maximum number of iterations
@@ -31,7 +36,7 @@ function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(
 #	resvec  - error at each iteration
 
 	n   = length(b)
-	M1f =  isa(M1,Function) ? M1 : (x,res) -> M1\x
+	M1f =  isa(M1,Function) ? M1 : x -> M1\x
 	M2f =  isa(M2,Function) ? M2 : x -> M2\x
 	
 	# allocate v,t,p_hat,s_hat
@@ -45,7 +50,7 @@ function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(
 		x = zeros(eltype(b),n)
 		r = copy(b)
 	else
-		r = b - Af(x,v)
+		r = b - A(x)
 	end
 	
 	resvec = zeros(maxIter+1)
@@ -77,9 +82,9 @@ function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(
 			p = copy(r)
 		end
 	
-		p_hat = M1f(p,p_hat)  # compute M1\p
-		p_hat = M2f(p_hat)    # compute M2\phat
-		v     = Af(p_hat,v)   # compute A*phat
+		p_hat = M1f(p)      # compute M1\p
+		p_hat = M2f(p_hat)  # compute M2\phat
+		v     = A(p_hat)    # compute A*phat
 	
 		alpha = rho / ( dot(r_tld,v) )
 		# the following two lines do: s = r - alpha*v
@@ -91,10 +96,10 @@ function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(
 			resid = norm( s ) / bnrm2
 			flag  = -3; break 
 		end
-		s_hat = M1f(s,s_hat)      # compute M1\s
+		s_hat = M1f(s)      # compute M1\s
 		s_hat = M2f(s_hat)  # compute M2\shat
-		t     = Af(s_hat,t)   # compute A*shat
-		omega = ( dot(t,s)) / ( dot(t,t) )
+		v     = A(s_hat)    # compute A*shat
+		omega = ( dot(v,s)) / ( dot(v,v) )
 		
 		# The following three lines do: x += alpha*p_hat + omega*s_hat
 		BLAS.scal!(n,alpha,p_hat,1)
@@ -103,7 +108,7 @@ function bicgstb(Af::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=(
 		
 		# the following two lines do: r = s - omega * t
 		r = BLAS.blascopy!(n,s,1,r,1)
-		BLAS.axpy!(n,-omega,t,1,r,1)
+		BLAS.axpy!(n,-omega,v,1,r,1)
 		
 		err = norm( r ) / bnrm2
 		resvec[iter+1] = err

@@ -1,6 +1,7 @@
 export lanczosBidiag
 
-function lanczosBidiag{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}, k::Int) 
+function lanczosBidiag{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}, k::Int) 
+	T  = promote_type(T1,T2)
 	x1 = zeros(T,size(A,1))
 	x2 = zeros(T,size(A,2))
 	
@@ -9,7 +10,7 @@ function lanczosBidiag{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}, k::Int)
 end
 
 
-lanczosBidiag(A,b::Vector,k::Int) = lanczosBidiag((x,flag) -> ((flag=='F') ? A*x : A'*x),b,k)
+lanczosBidiag(A,b,k) = lanczosBidiag((x,flag) -> ((flag=='F') ? A*x : A'*x),b,k)
 
 function lanczosBidiag(A::Function,p::Vector,k::Int)
 # U, B, V =  lanczosBidiag(A,p::Vector,k::Int)

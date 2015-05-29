@@ -4,8 +4,8 @@ using Base.Test
 println("=== Testing bicgstb for real matrix === ")
 A  = sprandn(100,100,.1) + 10*speye(100)
 D  = diag(A)
-Af(x,v) = A*x 
-M(x,v)  = D.\x
+Af(x) = A*x 
+M(x)  = D.\x
 rhs = randn(100)
 
 x1 = bicgstb(A,rhs,tol=1e-6)
@@ -23,8 +23,8 @@ x5 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,M1=M)
 println("Testing bicgstb for complex matrix")
 A  = sprandn(100,100,.1) + 10*speye(100) + im*(sprandn(100,100,.1) + 10*speye(100) )
 D  = diag(A)
-Af(x,v) = A*x 
-M(x,v)  = D.\x
+Af(x) = A*x 
+M(x)  = D.\x
 rhs = randn(100) + 1im * randn(100)
 
 x1 = bicgstb(A,rhs,tol=1e-6)

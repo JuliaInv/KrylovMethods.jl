@@ -1,11 +1,11 @@
 export gmres
 
-function gmres{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1},restrt::Int; kwargs...) 
-	Ax = zeros(T,size(A,1))
+function gmres{T1,T2}(A::SparseMatrixCSC{T1,Int64},b::Array{T2,1},restrt::Int; kwargs...) 
+	Ax = zeros(promote_type(T1,T2),size(A,1))
 	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
 end
 
-gmres(A,b::Vector,restrt::Int;kwargs...) = gmres(x -> A*x ,b::Vector;kwargs...)
+gmres(A,b,restrt;kwargs...) = gmres(x -> A*x ,b,restrt;kwargs...)
 
 function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1,x=[],out=0)

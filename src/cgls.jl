@@ -1,6 +1,7 @@
 export cgls
 
-function cgls{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}; kwargs...) 
+function cgls{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) 
+	T  = promote_type(T1,T2)
 	x1 = zeros(T,size(A,1))
 	x2 = zeros(T,size(A,2))
 	
@@ -8,8 +9,7 @@ function cgls{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}; kwargs...)
 	return cgls(Af,b;kwargs...)
 end
 
-
-cgls(A,b::Vector;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
+cgls(A,b;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
 
 
 function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)

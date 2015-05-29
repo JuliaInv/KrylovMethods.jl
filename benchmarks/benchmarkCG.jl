@@ -11,9 +11,9 @@ for n=N
 	
 	A = getDivGrad(n,n,n)
 	rhs = zeros(n,n,n)
-	rhs[round(Int64,n/8):n-round(Int64,n/8),round(Int64,n/8):n-round(Int64,n/8),round(Int64,n/8):n-round(Int64,n/8)] = 1
-	rhs[round(Int64,n/4):n-round(Int64,n/4),round(Int64,n/4):n-round(Int64,n/4),round(Int64,n/4):n-round(Int64,n/4)] = 10;
-	rhs[round(Int64,n/3):n-round(Int64,n/3),round(Int64,n/3):n-round(Int64,n/3),round(Int64,n/3):n-round(Int64,n/3)] = 100;
+	rhs[round(Int,n/8):n-round(Int,n/8),round(Int,n/8):n-round(Int,n/8),round(Int,n/8):n-round(Int,n/8)] = 1
+	rhs[round(Int,n/4):n-round(Int,n/4),round(Int,n/4):n-round(Int,n/4),round(Int,n/4):n-round(Int,n/4)] = 10;
+	rhs[round(Int,n/3):n-round(Int,n/3),round(Int,n/3):n-round(Int,n/3),round(Int,n/3):n-round(Int,n/3)] = 100;
 	rhs = vec(rhs)
 	tolCG = 1e-10
 	

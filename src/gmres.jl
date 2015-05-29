@@ -1,6 +1,6 @@
 export gmres
 
-function gmres{T1,T2}(A::SparseMatrixCSC{T1,Int64},b::Array{T2,1},restrt::Int; kwargs...) 
+function gmres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) 
 	Ax = zeros(promote_type(T1,T2),size(A,1))
 	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
 end

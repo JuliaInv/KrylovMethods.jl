@@ -11,10 +11,11 @@ julia:
 notifications:
   email: false
  
+before_install:
+   - julia -e 'Pkg.clone("https://github.com/lruthotto/LinearOperators.jl"); Pkg.build("LinearOperators")'
+   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 
 script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone("https://github.com/dpo/LinearOperators.jl"); Pkg.build("LinearOperators")'
   - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("KrylovMethods"); Pkg.test("KrylovMethods"; coverage=true)'
 
 after_success:

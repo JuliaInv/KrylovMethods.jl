@@ -63,6 +63,8 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 	
 	iter = 1
 	flag = -1
+	rho1 = 0.0
+	p   = copy(r)
 	if out==2
 		println("=== bicgstb ===")
 		println(@sprintf("%4s\t%7s","iter","relres"))
@@ -73,15 +75,13 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			flag = -2; break;
 		end
 		if ( iter > 1 )
-			beta  = ( rho/rho_1 )*( alpha/omega )
+			beta  = ( rho/rho1 )*( alpha/omega )
 			# p = r + beta*( p - omega*v );
 			BLAS.scal!(n,beta,p,1)
 			BLAS.axpy!(n,-(beta*omega),v,1,p,1)
 			BLAS.axpy!(n,one(eltype(p)),r,1,p,1)
-		else
-			p = copy(r)
 		end
-	
+		
 		p_hat = M1f(p)      # compute M1\p
 		p_hat = M2f(p_hat)  # compute M2\phat
 		v     = A(p_hat)    # compute A*phat
@@ -122,7 +122,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		if  norm(omega) < 1e-16
 			flag = -4; break
 		end
-		rho_1 = rho
+		rho1 = rho
 	end
 	if out>=0
 		if flag==-1

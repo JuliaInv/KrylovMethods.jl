@@ -1,32 +1,25 @@
 export gmres
 
 function gmres{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1},restrt::Int; kwargs...) 
-	x1 = zeros(T,size(A,1))
-	x2 = zeros(T,size(A,2))
-	
-	Alinop = LinearOperator(size(A,1),size(A,2),T,false,false,
-							v -> A_mul_B!(1.0,A,v,0.0,x1),nothing,
-							v -> At_mul_B!(1.0,A,v,0.0,x2))
-	return gmres(Alinop,b,restrt;kwargs...)
+	Ax = zeros(T,size(A,1))
+	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
 end
 
-gmres(A::Array,b::Vector,restrt::Int;kwargs...) = gmres(LinearOperator(A),b::Vector;kwargs...)
+gmres(A,b::Vector,restrt::Int;kwargs...) = gmres(x -> A*x ,b::Vector;kwargs...)
 
-
-
-function gmres(A::LinearOperator,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::LinearOperator=opEye(length(b)),x::Vector=[],out::Int=0)
+function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # Generalized Minimal residual ( GMRESm ) method with restarts applied to A*x = b.
 #
 # Input:
 #
-#	A       - matrix or function computing A*x
+#	A       - function computing A*x 
 #	b       - right hand side vector
 #	restrt  - number of iterations between restarts
 #	tol     - error tolerance
 #	maxIter - maximum number of iterations
-#	M       - preconditioner, either matrix or function computing M\x
+#	M       - preconditioner, function computing M\x
 #	x       - starting guess
 #	out     - flag for output (0 : only errors, 1 : final status, 2: error at each iteration)
 #
@@ -43,9 +36,9 @@ function gmres(A::LinearOperator,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::
 	n  = length(b)
 	if isempty(x)
 		x = zeros(n)
-		r = M*b
+		r = M(b)
 	else
-		r = M*(b-A*x)
+		r = M(b-A(x))
 	end
 	
 	bnrm2 = norm(b)
@@ -87,8 +80,8 @@ function gmres(A::LinearOperator,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::
 		if out==2;; print(@sprintf("%3d\t", iter));end
 		
 		for i = 1:restrt
-			w = A*(V[:,i])
-			w = M*(w)
+			w = A(V[:,i])
+			w = M(w)
 			
 			for k = 1:i # basis using Gram-Schmidt
 				H[k,i] = dot(w,V[:,k])
@@ -130,8 +123,8 @@ function gmres(A::LinearOperator,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::
 		y  = H[1:restrt,1:restrt]\s[1:restrt]
 		x += V[:,1:restrt]*y
 		
-		r = b - A*x
-		r = M*r
+		r = b - A(x)
+		r = M(r)
 		
 		s[restrt+1] = norm(r)
 		resvec[cnt] = abs(s[restrt+1]) / bnrm2

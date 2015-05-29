@@ -4,17 +4,15 @@ function cgls{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}; kwargs...)
 	x1 = zeros(T,size(A,1))
 	x2 = zeros(T,size(A,2))
 	
-	Alinop = LinearOperator(size(A,1),size(A,2),T,false,false,
-							v -> A_mul_B!(1.0,A,v,0.0,x1),nothing,
-							v -> At_mul_B!(1.0,A,v,0.0,x2))
-	return cgls(Alinop,b;kwargs...)
+	Af(x,flag) = (flag=='F') ? A_mul_B!(1.0,A,x,0.0,x1) : At_mul_B!(1.0,A,x,0.0,x2)
+	return cgls(Af,b;kwargs...)
 end
 
-cgls(A::Array,b::Vector;kwargs...) = cgls(LinearOperator(A),b::Vector;kwargs...)
+
+cgls(A,b::Vector;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
 
 
-
-function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
+function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,x=[],interm=0,out=0)
 #
 # CGLS Conjugate gradient algorithm applied implicitly to the normal equations 
@@ -23,7 +21,7 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 #
 # Input:
 #
-#	A       - matrix or function computing A*x = A(x,'F') and A'*x = A(x,'T')
+#	A       - function computing A*x = A(x,'F') and A'*x = A(x,'T')
 #	b       - right hand side vector
 #	tol     - error tolerance, default 1e-2
 #	maxIter - maximum number of iterations, default 100
@@ -40,15 +38,18 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 #	eta     - residual norm: norm(A*x-b)
 #	rho     - norm of current iterate: norm(x)
 	
-	m,n = size(A)
+	m = length(b)
 	# Initialization.
-	if isempty(x)
+	if norm(b)==0; return zeros(eltype(b),n); end
+	if isempty(x) || all(x.==0.0)
 		r = copy(b)			# residual r = b - A*x
-		s = A'*r		# compute gradient g = A'*(A*x-b)
+		s = A(r,'T')		# compute gradient g = A'*(A*x-b)
+		n = length(s)
 		x = zeros(n)
 	else
-		r = b-A*x
-		s = A'*r
+		r = b-A(x,'F')
+		s = A(r,'T')
+		n = length(s)
 	end
 	
 	
@@ -72,14 +73,14 @@ function cgls(A::LinearOperator,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Ve
 	
 	iter = 1 # makes iter available outside the loop
 	for iter=1:maxIter
-		q     = A*p # compute A*g
+		q     = A(p,'F') # compute A*g
 		alpha = normSc/BLAS.dot(m,q,1,q,1)
 		BLAS.axpy!(n,alpha,p,1,x,1) # faster than x    += alpha*p
 		
 		if interm==1; X[:,iter] = x; end
 		
 		BLAS.axpy!(m,-alpha,q,1,r,1) # faster than r  -= alpha*q
-		s   = A'*r # compute gradient, that is A'*r
+		s   = A(r,'T') # compute gradient, that is A'*r
 		
 		normSt = BLAS.dot(n,s,1,s,1)
 		if (iter>1) && (normSt <= tol)

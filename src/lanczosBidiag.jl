@@ -1,28 +1,24 @@
 export lanczosBidiag
 
-function lanczosBidiag{T}(A::SparseMatrixCSC{T,Int64},p::Vector,k::Int) 
+function lanczosBidiag{T}(A::SparseMatrixCSC{T,Int64},b::Array{T,1}, k::Int) 
 	x1 = zeros(T,size(A,1))
 	x2 = zeros(T,size(A,2))
 	
-	Alinop = LinearOperator(size(A,1),size(A,2),T,false,false,
-							v -> A_mul_B!(1.0,A,v,0.0,x1),nothing,
-							v -> At_mul_B!(1.0,A,v,0.0,x2))
-	return lanczosBidiag(Alinop,p,k)
+	Af(x,flag) = (flag=='F') ? A_mul_B!(1.0,A,x,0.0,x1) : At_mul_B!(1.0,A,x,0.0,x2)
+	return lanczosBidiag(Af,b,k)
 end
 
-lanczosBidiag(A::Array,p::Vector,k::Int) = lanczosBidiag(LinearOperator(A),p,k)
 
+lanczosBidiag(A,b::Vector,k::Int) = lanczosBidiag((x,flag) -> ((flag=='F') ? A*x : A'*x),b,k)
 
-
-
-function lanczosBidiag(A::LinearOperator,p::Vector,k::Int)
+function lanczosBidiag(A::Function,p::Vector,k::Int)
 # U, B, V =  lanczosBidiag(A,p::Vector,k::Int)
 #
 # Lanczos bidiagonalization of matrix A.
 #
 # Input:
 #
-#	A       - matrix or function computing A*x = A(x,'F') and A'*x = A(x,'T')
+#	A       - function computing A*x = A(x,'F') and A'*x = A(x,'T')
 #	p       - starting vector
 #	k       - dimension of subspace
 #
@@ -30,18 +26,16 @@ function lanczosBidiag(A::LinearOperator,p::Vector,k::Int)
 #
 #	U,B,V   - Lanczos vectors
 
-	Af  =  isa(A,Function) ? x->A(x,'F') : x->A*x
-	ATf =  isa(A,Function) ? x->A(x,'T') : x->A'*x
 	
 	m      = length(p)
 	beta   = norm(p)
 	u      = p/beta
-	ATu    = ATf(u)
+	ATu    = A(u,'T')
 	
 	n      = length(ATu)
 	v      = zeros(n)
 	
-	# alocate space for Lancsos vectors
+	# alocate space for Lanczos vectors
 	U = zeros(m,k+1)
 	V = zeros(n,k)
 	B = zeros(k,2)
@@ -50,7 +44,7 @@ function lanczosBidiag(A::LinearOperator,p::Vector,k::Int)
 	
 	for i=1:k # perform Lanczos bidiagonalization with reorthogonalization.
 		if i>1;
-			ATu = ATf(u)
+			ATu = A(u,'T')
 		end
 		r = ATu - beta*v
 		
@@ -63,7 +57,7 @@ function lanczosBidiag(A::LinearOperator,p::Vector,k::Int)
 		B[i,2] = alpha
 		V[:,i] = v
 		
-		Av = Af(v)
+		Av = A(v,'F')
 		p = Av - alpha*u
 		
 		for j=1:i; p = p - dot(U[:,j],p)*U[:,j]; end

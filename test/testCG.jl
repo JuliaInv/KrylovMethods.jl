@@ -17,9 +17,8 @@ L = tril(A)
 D = diag(A)
 U = triu(A)
 n = size(A,1)
-JAC = LinearOperator(n,n,Float64,false,false,x -> D.\x,nothing, x -> D.\x)
-SGS = LinearOperator(n,n,Float64,false,false,x -> L\(D.*(U\x)),nothing, x -> L\(D.*(U\x)))
-
+JAC(x) = D.\x
+SGS(x) = L\(D.*(U\x))
 
 rhs = randn(size(A,1))
 tolCG = 1e-5
@@ -43,9 +42,9 @@ xSGSr,flagSGSr,relresSGSr,iterSGSr,resvecSGSr  = cg(A,rhs,tol=tolCG,maxIter=100,
 @test norm(A*xCGmf-rhs)/norm(rhs) <= tolCG
 @test norm(A*xSGSmf-rhs)/norm(rhs) <= tolCG
 @test norm(A*xJACmf-rhs)/norm(rhs) <= tolCG
-@test norm(A*xCGr-rhs)/norm(rhs) <= tolCG
-@test norm(A*xSGSr-rhs)/norm(rhs) <= tolCG
-@test norm(A*xJACr-rhs)/norm(rhs) <= tolCG
+@test norm(A*xCGr-rhs)/norm(rhs) <= tolCG*10
+@test norm(A*xSGSr-rhs)/norm(rhs) <= tolCG*10
+@test norm(A*xJACr-rhs)/norm(rhs) <= tolCG*10
 # preconditioners should at least not increase number of iter
 @test iterJAC==iterCG
 @test iterSGS<=iterJAC

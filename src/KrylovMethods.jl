@@ -8,6 +8,6 @@ module KrylovMethods
 	include("gmres.jl")	
 	include("lanczosBidiag.jl")
 	include("sor.jl")	
-	include("minres.jl")	
+	# include("minres.jl")	
 
 end

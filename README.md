@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/lruthotto/KrylovMethods.jl.svg?branch=master)](https://travis-ci.org/lruthotto/KrylovMethods.jl)
-
+[![Build status](https://ci.appveyor.com/api/projects/status/tkn9ssik9n9vgdt2?svg=true)](https://ci.appveyor.com/project/lruthotto/krylovmethods-jl)
 [![Coverage Status](https://coveralls.io/repos/lruthotto/KrylovMethods.jl/badge.svg)](https://coveralls.io/r/lruthotto/KrylovMethods.jl)
+
 
 
 

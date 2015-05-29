@@ -3,6 +3,7 @@ using Base.Test
 using LinearOperators
 include("getDivGrad.jl")
 
+
 println("=== Testing CG ===")
 # small full system
 A = [4.0 1; 1 4]

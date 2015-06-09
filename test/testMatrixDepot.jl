@@ -17,7 +17,7 @@ for k=1:length(debit)
 	@test norm(xt-x3)/norm(xt) < 1e-3
 	@printf " gmres is OK "
 	x1, = cg(A,rhs,maxIter=length(rhs),tol=1e-16,out=-1)
-	@test norm(xt-x1)/norm(xt) < 1e-5
+	@test norm(xt-x1)/norm(xt) < 1e-3
 	@printf "cg is OK\n"
 end
 	

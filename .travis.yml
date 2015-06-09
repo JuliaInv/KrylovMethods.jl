@@ -12,6 +12,7 @@ notifications:
   email: false
  
 before_install:
+   - julia -e 'Pkg.add("MatrixDepot"); Pkg.add("MatrixDepot")'
    - julia -e 'Pkg.clone("https://github.com/lruthotto/LinearOperators.jl"); Pkg.build("LinearOperators")'
    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 

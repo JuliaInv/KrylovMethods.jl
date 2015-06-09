@@ -47,6 +47,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
 	err = norm( r ) / bnrm2
 	if err < tol; return x, err; end
 	
+	restrt = min(restrt,n-1)
 	V     = zeros(n,restrt+1)
 	H     = zeros(restrt+1,restrt)  
 	cs    = zeros(restrt)  
@@ -135,10 +136,12 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
 		end
 	end
 	
-	if flag==-1
-		println(@sprintf("gmres iterated maxIter (=%d) times without achieving the desired tolerance.",maxIter))
-	elseif out>=1
-		println(@sprintf("gmres achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[cnt]))
+	if out>=1
+		if flag==-1
+			println(@sprintf("gmres iterated maxIter (=%d) times without achieving the desired tolerance.",maxIter))
+		else
+			println(@sprintf("gmres achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[cnt]))
+		end
 	end
 	return x,flag,resvec[cnt],iter,resvec[1:cnt]
 end

@@ -5,5 +5,6 @@ include("testGMRES.jl")
 include("testLANCZOS.jl")
 include("testSOR.jl")
 include("testLSQR.jl")
+include("testMINRES.jl")
 include("testMatrixDepot.jl")
 

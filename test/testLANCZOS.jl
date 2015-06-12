@@ -16,9 +16,9 @@ U,B,V = lanczosBidiag(A,p,k)
 println("=== Testing Lanczos Tridiagonalization ===")
 
 A   = matrixdepot("rosser",4)
-Af  = x -> A*x
+Aff  = x -> A*x
 T1,V1 = lanczosTridiag(A,ones(size(A,1)),size(A,1),tol=1e-10,doReorth=true)
-T2,V2 = lanczosTridiag(Af,ones(size(A,1)),size(A,1),tol=1e-10,doReorth=false)
+T2,V2 = lanczosTridiag(Aff,ones(size(A,1)),size(A,1),tol=1e-10,doReorth=false)
 sT1  = svd(full(T1))[2]
 sT2  = svd(full(T2))[2]
 sA   = svd(full(A))[2]

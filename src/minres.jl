@@ -56,24 +56,28 @@ minres(A,b;kwargs...) = minres(x -> A*x,b::Vector;kwargs...)
 
 function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,condlim=1e10,maxIter=10,out=1)
     
-    n = length(b)
-    beta = norm(b)
-    if all(beta.==0); return zeros(eltype(b),n); end
+    n      = length(b)
+    if all(b.==0); return zeros(eltype(b),n); end
     
-    x = zeros(eltype(b),n)
+    if !isempty(x)
+		b -= A(x)
+	else
+    	x = zeros(eltype(b),n)
+	end
+	
     nres = norm(b)
     
     # initialize scalars (or vectors of size maxIter)
     alpha    = zeros(maxIter+1)
     beta     = zeros(maxIter+2)
-    beta[2]  = norm(b)
+    beta[2]  = nres
     gamma    = zeros(maxIter+2)
-    gamma[1] = norm(b)
+    gamma[1] = nres
     epsil    = zeros(maxIter+2)
     delta    = zeros(maxIter+2)
     delta[2] = 0.0
     phi      = zeros(maxIter+1)
-    phi[1]   = norm(b)
+    phi[1]   = nres
     psi      = zeros(maxIter+1)
     tau      = zeros(maxIter+1)
     tau[1]   = beta[2]

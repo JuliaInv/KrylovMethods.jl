@@ -9,5 +9,7 @@ module KrylovMethods
 	include("lanczosBidiag.jl")
 	include("sor.jl")	
 	include("lsqr.jl")	
-
+	include("lanczosTridiag.jl")
+	include("lanczos.jl")
+	include("minres.jl")
 end

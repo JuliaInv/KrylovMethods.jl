@@ -1,3 +1,4 @@
+using LinearOperators
 using MatrixDepot
 using KrylovMethods
 using Base.Test
@@ -8,10 +9,21 @@ println("=== Testing CLGS ===")
 A   = sprandn(100,10,.2)
 Af(x,flag) = (flag=='F') ? A*x : A'*x
 rhs = randn(100)
+
+# test early stopping behaviour
+tt = cgls(Af,rhs,tol=1e-20,maxIter=2,out=2)
+@test tt[2]==-1
+
+# test behaviour for zero rhs
+tt = cgls(Af,zeros(size(A,1)),tol=1e-20,maxIter=2,out=2)
+@test tt[2]==-9
+@test all(tt[1].==0)
+
+
 xgt = full(A)\rhs
 xt  = cgls(LinearOperator(A),rhs,tol=1e-20)
 xt2 = cgls(Af,rhs,tol=1e-20,maxIter=100,x=randn(size(xt[1])))
-Xt  = cgls(A,rhs,tol=1e-20,maxIter=100,interm=1)
+Xt  = cgls(A,rhs,tol=1e-20,maxIter=100,interm=1,out=1)
 
 @test norm(xgt-xt[1])/norm(xgt) < 1e-6
 @test norm(xgt-xt2[1])/norm(xgt) < 1e-6

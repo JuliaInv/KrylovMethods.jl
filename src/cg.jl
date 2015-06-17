@@ -32,14 +32,15 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 #	flag    - exit flag ( 0 : desired tolerance achieved,
 #						 -1 : maxIter reached without converging
 #						 -2 : Matrix A is not positive definite
-#						 -3 : cg stalled, i.e. two consecutive residuals have same norm)
+#						 -3 : cg stalled, i.e. two consecutive residuals have same norm
+#						 -9 : right hand side was zero)
 #	err     - norm of relative residual, i.e., norm(A*x-b)/norm(b)
 #	iter    - number of iterations
 #	resvec  - norm of relative residual at each iteration
 	n = length(b)
 	
 	Ap = zeros(eltype(b),n) # allocate vector for A*x once to save allocation time
-	if norm(b)==0; return zeros(eltype(b),n); end
+	if norm(b)==0; return zeros(eltype(b),n),-9; end
 	if isempty(x)
 		x = zeros(eltype(b),n)
 		r = copy(b)
@@ -78,13 +79,12 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 		if resvec[iter] <= tol
 			flag = 0; break
 		end
-		
+				
 		z    = M(r)
 		beta = dot(z,r)/gamma
 		# the following two lines are equivalent to p = z + beta*p
 		p = BLAS.scal!(n,beta,p,1)
 		p = BLAS.axpy!(n,1.0,z,1,p,1)
-		
 	end
 	
 	if out>=0

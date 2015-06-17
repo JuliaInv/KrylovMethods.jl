@@ -31,11 +31,13 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 #							-2 : rho equal to zero
 #							-3 : norm(s)/bnrm2 < tol 
 #							-4 : omega < 1e-16
+#							-9 :  right hand side was zero)
 #	err     - error, i.e., norm(A*x-b)/norm(b)
 #	iter    - number of iterations
 #	resvec  - error at each iteration
 
 	n   = length(b)
+	if norm(b)==0; return zeros(eltype(b),n),-9; end
 	M1f =  isa(M1,Function) ? M1 : x -> M1\x
 	M2f =  isa(M2,Function) ? M2 : x -> M2\x
 	
@@ -71,9 +73,8 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 	end
 	for iter = 1:maxIter
 		rho   = dot(r_tld,r)
-		if ( rho == 0.0 )
-			flag = -2; break;
-		end
+		if ( abs(rho) < 1e-16 ); flag = -2; break; end
+		
 		if ( iter > 1 )
 			beta  = ( rho/rho1 )*( alpha/omega )
 			# p = r + beta*( p - omega*v );
@@ -119,9 +120,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			flag = 0; break
 		end
 		
-		if  norm(omega) < 1e-16
-			flag = -4; break
-		end
+		if norm(omega) < 1e-16; flag = -4; break; end
 		rho1 = rho
 	end
 	if out>=0

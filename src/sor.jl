@@ -139,7 +139,7 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 	
 	if (flag==-1) && (out>=0)
 		println(@sprintf("sor iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",maxIter,resvec[iter],tol))
-	elseif  out==1
+	elseif  (out>=1)
 		println(@sprintf("sor achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))
 	end
 	

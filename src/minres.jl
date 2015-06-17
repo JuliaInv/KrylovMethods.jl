@@ -142,7 +142,6 @@ function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,co
             flag = 0
             break
         end
-
         if conA > condlim
             flag = -3
             break

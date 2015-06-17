@@ -11,6 +11,22 @@ rhs = [2.0;2]
 x,flag,relres,iter,resvec = cg(A,rhs,tol=1e-15,out=2)
 @test norm(A*x-rhs)/norm(rhs) <= 1e-15
 
+# test message and flag when stopping early
+x,flag,relres,iter,resvec = cg(A,randn(2),tol=1e-15,out=2,maxIter=1)
+@test flag==-1
+
+# test for zero right hand-side
+x,flag = cg(A,zeros(2),out=2)
+@test flag == -9
+@test all(x.==0)
+
+# negative definite matrix
+b = [1 -1.0]
+KKT = [A b'; b 0]
+x,flag, = cg(KKT,randn(3),out=1)
+@test flag==-2
+
+
 # CG: test sparse Laplacian
 A = getDivGrad(8,8,8)
 Alinop = LinearOperator(A)

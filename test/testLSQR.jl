@@ -5,13 +5,28 @@ using Base.Test
 
 println("=== Testing LSQR ===")
 
+# small test
+A   = [1 1; 0 -1; 1 0.]
+r1  = A[:,1]   # compatible
+r2  = randn(3) # incompatible
+r3  = [1;1;-1.] # in the nullpace of A'
+
+x1 = lsqr(A,r1,out=2,atol=1e-8,doBidiag=true)
+@test norm(x1[1]-[1;0])<1e-10
+@test x1[2]==1
+x2 = lsqr(A,r2,out=1,atol=1e-8)
+@test x2[2]==2
+x3 = lsqr(A,r3,out=2)
+@test all(x3[1].==0)
+
+
 # test with sparse random matrix
 A   = sprandn(100,10,.2)
 rhs = randn(100)
 xgt = full(A)\rhs
 Af(flag,x,a=0.0,v=0.0) = (flag=='F') ? A*x +a*v : A'*x+a*v
 
-x1  = lsqr(LinearOperator(A),rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)
+x1  = lsqr(LinearOperator(A),rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10,out=1)
 x2  = lsqr(A,rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)
 x3  = lsqr(Af,rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)
 

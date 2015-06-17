@@ -40,7 +40,8 @@ export lsqr
 #  x       - approximate solution
 #  flag    - exit flag ( 0 : stopping based on atol or btol,
 #                       -1 : maxIter reached without converging
-#                       -2 : condition number became too large)
+#                       -2 : condition number became too large
+#                       -9 : right hand side was zero)
 #  his     - status at each iteration
 #  U,S,V   - bidiagonalization (only build if doBidiag==true)
 
@@ -64,36 +65,42 @@ function lsqr(A::Any,b;kwargs...)
 end
 
 
-function lsqr(A::Function,b;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=1,doBidiag=false)
+
+function lsqr(A::Function,b;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=0,doBidiag=false)
     m  = length(b)
+    
+    nres0  = BLAS.nrm2(m,b,1) # norm(b)
+    if nres0==0; return zero(eltype(b)),-9; end
     
     # (1) initialize
     if !isempty(x)
         b = copy(b)
         b = A('F',-x,1.0,b)
     end
-    nrmb  = BLAS.nrm2(m,b,1) # norm(b)
-    if norm(b)==0 # check for zero solution
-        return zeros(n)
-    end
     
+    nrmb  = BLAS.nrm2(m,b,1) # norm(b)
     beta  = nrmb
+  
     u     = b/beta
     v     = A('T',u,0.0)# A'*u
     n     = length(v)
-    alpha = BLAS.nrm2(n,v,1)
+	x     = (isempty(x)) ? zeros(n) : x
+	if (beta <= btol*nres0); return x,1; end
+	alpha = BLAS.nrm2(n,v,1)
+	if alpha==0; return x,2; end
     v    /= alpha
     w     = copy(v)
     
-    x     = zeros(n)
     phib  = beta
     rhob  = alpha
+
     
     # (2) perform iteration
     maxIter = min(maxIter,n,m)
     iter = 1
     nBk  = 0.0
     nDk  = 0.0
+    nres = beta
     STOP = fill(false,3)
     if doBidiag
         U    = zeros(m,maxIter+1)
@@ -144,14 +151,15 @@ function lsqr(A::Function,b;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,ou
         nrmA = sqrt(nBk)
         nrmG = abs(phib*alpha*c)
         conA = sqrt(nBk*nDk)
-        his[iter,:] = [alpha nrmG nrmA conA]
+        nres *= s
+        his[iter,:] = [nres nrmG nrmA conA]
         
-        STOP[1] = alpha <= btol*nrmb+ atol*nrmA*norm(x)        
-        STOP[2] = (nrmG/(nrmA*alpha)) <= atol
+        STOP[1] = nres <= btol*nres0+ atol*nrmA*norm(x)        
+        STOP[2] = (nrmG/(nrmA*nres)) <= atol
         STOP[3] = conA > condlim
         
         if out>1
-            @printf "%03d\t%1.3e\t%1.3e\t%1.3e\t%1.3e\t[%d,%d,%d]\n" iter alpha nrmG nrmA conA 1.0*STOP[1] 1.0*STOP[2] 1.0*STOP[3]
+            @printf "%03d\t%1.3e\t%1.3e\t%1.3e\t%1.3e\t[%d,%d,%d]\n" iter nres nrmG nrmA conA 1.0*STOP[1] 1.0*STOP[2] 1.0*STOP[3]
         end
         iter += 1
         
@@ -159,15 +167,20 @@ function lsqr(A::Function,b;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,ou
             break; 
         end
     end
+
+    if STOP[1]; flag = 1; end
+    if STOP[2] && !STOP[1]; flag = 2; end
+    if STOP[3]; flag = -2; end
+
     if out>=0
         if flag==-1
-            println(@sprintf("lsqr iterated maxIter (=%d) times. Estimated residual norm is %1.3e and estimated norm of gradient is %1.3e.",iter-1,his[iter-1,1],his[iter-1,2]))
-        elseif flag==0 && out>=1 && STOP[1]==true
-            println(@sprintf("lsqr achieved desired tolerance at iteration %d. The system should be compatible. Residual norm is %1.2e.",iter-1,his[iter-1,1]))
-        elseif flag==0 && out>=1 && STOP[2]==true
-            println(@sprintf("lsqr achieved desired tolerance at iteration %d. The system should be incompatible. Gradient norm is %1.2e.",iter-1,his[iter-1,1]))
-        elseif flag==0 && out>=1 && STOP[2]==true
+            println(@sprintf("lsqr iterated maxIter (=%d) times without converging to desired tolerance. Estimated residual norm is %1.3e and estimated norm of gradient is %1.3e.",iter-1,his[iter-1,1],his[iter-1,2]))
+        elseif flag==-2
             println(@sprintf("lsqr stopped at iteration %d because the matrix seems to be too ill-conditioned. Estimated condition number is %1.2e.",iter-1,his[iter-1,4]))
+        elseif flag==1 && out>=1
+            println(@sprintf("lsqr achieved desired tolerance at iteration %d. The system should be compatible. Residual norm is %1.2e.",iter-1,his[iter-1,1]))
+        elseif flag==2 && out>=1
+            println(@sprintf("lsqr achieved desired tolerance at iteration %d. The system should be incompatible. Gradient norm is %1.2e.",iter-1,his[iter-1,1]))
         end
     end
 

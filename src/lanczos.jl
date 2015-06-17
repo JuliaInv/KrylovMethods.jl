@@ -1,5 +1,5 @@
 
-# Performs a Lancsos step
+# Performs a Lanczos step
 #
 # Implementation is based on Table 2.1 in
 #
@@ -28,7 +28,7 @@ function LanczosStep!(A::Function,vk,vkm1,beta;sigma=0.0,tol=1e-10)
 end
 
 
-# Computes a rotation
+# Computes a Givens rotation
 #
 # Implementation is based on Table 2.9 in
 #

@@ -43,6 +43,6 @@ function Af(x)
 	return Af*x
 end
 rhs = zeros(20)
-x = minres(Af,rhs,maxIter=20,rtol=1e-20,gtol=1e-20,btol=1e-10,condlim=1e20)
+x, = minres(Af,rhs,maxIter=20,rtol=1e-20,gtol=1e-20,btol=1e-10,condlim=1e20)
 @test all(x.==0)
 @test mv==0

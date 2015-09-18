@@ -9,7 +9,7 @@ function cgls{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...)
     return cgls(Af,b;kwargs...)
 end
 
-cgls(A,b;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
+cgls(A,b::Vector;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
 
 
 function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
@@ -41,7 +41,7 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
     
     m = length(b)
     # Initialization.
-    if norm(b)==0; return 0.0,-9; end
+    if norm(b)==0; return 0.0,-9,0.0,0.0,[0.0]; end
     if isempty(x) || all(x.==0.0)
         r = copy(b)			# residual r = b - A*x
         s = A(r,'T')		# compute gradient g = A'*(A*x-b)
@@ -84,9 +84,9 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
         
         normSt = BLAS.dot(n,s,1,s,1)
         if (iter>1) && (normSt <= tol)
-            eta = eta[1:iter-1]
-            rho = rho[1:iter-1]
-            Arn = Arn[1:iter-1]
+            resize!(eta,iter-1)
+            resize!(rho,iter-1)
+            resize!(Arn,iter-1)
             flag = 0; break
         end
         

@@ -6,9 +6,7 @@ function cg{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...)
 	return cg(v -> At_mul_B!(1.0,A,v,0.0,x),b;kwargs...) # multiply with transpose of A for efficiency
 end
 
-
-cg(A,b;kwargs...) = cg(x -> A*x,b;kwargs...)
-
+cg(A,b::Vector;kwargs...) = cg(x -> A*x,b;kwargs...)
 
 function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,M=1,x=[],out=0)
@@ -39,8 +37,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 #	resvec  - norm of relative residual at each iteration
 	n = length(b)
 	
-	Ap = zeros(eltype(b),n) # allocate vector for A*x once to save allocation time
-	if norm(b)==0; return zeros(eltype(b),n),-9; end
+	if norm(b)==0; return zeros(eltype(b),n),-9,0.0,0,[0.0]; end
 	if isempty(x)
 		x = zeros(eltype(b),n)
 		r = copy(b)

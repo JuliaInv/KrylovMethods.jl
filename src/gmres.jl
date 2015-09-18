@@ -5,7 +5,7 @@ function gmres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwa
 	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
 end
 
-gmres(A,b,restrt;kwargs...) = gmres(x -> A*x ,b,restrt;kwargs...)
+gmres(A,b::Vector,restrt;kwargs...) = gmres(x -> A*x ,b,restrt;kwargs...)
 
 function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0)
 # x,flag,err,iter,resvec = gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1,x=[],out=0)
@@ -35,7 +35,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
     
     # initialization
     n  = length(b)
-	if norm(b)==0; return zeros(eltype(b),n),-9; end
+	if norm(b)==0; return zeros(eltype(b),n),-9,0.0,0,[0.0]; end
     if isempty(x)
         x = zeros(n)
         r = M(b)

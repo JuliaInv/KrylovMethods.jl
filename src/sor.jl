@@ -81,7 +81,7 @@ function bwdTriSolveOmega!(A::SparseMatrixCSC,b::Vector,omega::Real=1)
 	nothing
 end
 
-function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::Int=1, x::Vector=[],out::Int=0)
+function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::Int=1,out::Int=0)
 # x,flag,err,iter,resvec = sor(A::SparseMatrixCSC, b::Vector; omega::Real=2/3, tol::Real=1e-2, maxIter::Int=1,out::Int=0)
 #
 # Successive over-relaxation applied to the linear system A*x = b.
@@ -95,7 +95,6 @@ function sor(A::SparseMatrixCSC,b::Vector;omega::Real=1,tol::Real=1e-2,maxIter::
 #	omega   - relaxation parameter (omega=1: Gauss Seidel)
 #	tol     - error tolerance
 #	maxIter - maximum number of iterations
-#	x       - starting guess
 #	out     - flag for output (-1 : no output, 0 : only errors, 1 : final status, 2: error at each iteration)
 #
 # Output:

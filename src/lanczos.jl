@@ -20,8 +20,8 @@ function LanczosStep!(A::Function,vk,vkm1,beta;sigma=0.0,tol=1e-10)
     BLAS.axpy!(n,-beta,vkm1,1,pk,1)# pk   -= beta*vkm1
     vkm1  = BLAS.blascopy!(n,vk,1,vkm1,1) # vkm1 = copy(vk)
     vk    = pk 
-	beta  = BLAS.nrm2(n,vk,1)
-	if beta>tol
+    beta  = BLAS.nrm2(n,vk,1)
+    if beta>tol
          vk /= beta
     end
     return alpha, beta,vk,vkm1
@@ -39,11 +39,11 @@ end
 function symOrtho(a,b)
     c = 0.0; s = 0.0; r = 0.0
 	if b==0
-		s = 0
+		s = 0.0
 		r = abs(a)
-		c = (a==0) ? c=1 : c = sign(a)
+		c = (a==0) ? c=1.0 : c = sign(a)
 	elseif a == 0
-		c = 0 
+		c = 0.0
 		s = sign(b)
 		r = abs(b)
 	elseif abs(b) > abs(a)

@@ -46,17 +46,17 @@ export lsqr
 #  U,S,V   - bidiagonalization (only build if doBidiag==true)
 
 
-function lsqr(A::SparseMatrixCSC,b;kwargs...)
+function lsqr(A::SparseMatrixCSC,b::Vector;kwargs...)
     # build function that is compatible with lsqr
-    v = zeros(size(A,2)) # output for A'*x
+    ATv = zeros(size(A,2)) # output for A'*x
     
-    Af(flag,x,a=0.0,v=v) = (flag=='F') ? A_mul_B!(1.0,A,x,a,v) : At_mul_B!(1.0,A,x,a,v)
+    Af(flag,x,a=0.0,v=ATv) = (flag=='F') ? A_mul_B!(1.0,A,x,a,v) : At_mul_B!(1.0,A,x,a,v)
 
     return lsqr(Af,b;kwargs...)
     
 end
 
-function lsqr(A::Any,b;kwargs...)
+function lsqr(A::Any,b::Vector;kwargs...)
     # build function that is compatible with lsqr
     Af(flag,x,a=0.0,v=0.0) = (flag=='F') ? A*x+a*v : A'*x+a*v
 
@@ -66,11 +66,11 @@ end
 
 
 
-function lsqr(A::Function,b;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=0,doBidiag=false)
+function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=0,doBidiag=false,storeInterm=false)
     m  = length(b)
     
     nres0  = BLAS.nrm2(m,b,1) # norm(b)
-    if nres0==0; return zero(eltype(b)),-9; end
+    if nres0==0; return zero(eltype(b)),-9,[0.0]; end
     
     # (1) initialize
     if !isempty(x)

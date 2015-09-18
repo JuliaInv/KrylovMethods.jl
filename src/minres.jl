@@ -51,13 +51,14 @@ function minres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...)
 	return minres(v -> At_mul_B!(1.0,A,v,0.0,x),b;kwargs...) # multiply with transpose of A for efficiency
 end
 
-minres(A,b;kwargs...) = minres(x -> A*x,b::Vector;kwargs...)
+minres(A,b::Vector;kwargs...) = minres(x -> A*x,b::Vector;kwargs...)
 
 
-function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,condlim=1e10,maxIter=10,out=1)
+function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,condlim=1e10,maxIter=10,out=1)
     
     n      = length(b)
-    if all(b.==0); return zeros(eltype(b),n); end
+    nres   = norm(b)
+	if nres==0; return zeros(eltype(b),n),-9,0.0,0.0,0.0,[0.0]; end
     
     if !isempty(x)
 		b -= A(x)
@@ -65,19 +66,18 @@ function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,co
     	x = zeros(eltype(b),n)
 	end
 	
-    nres = norm(b)
     
     # initialize scalars (or vectors of size maxIter)
     alpha    = zeros(maxIter+1)
     beta     = zeros(maxIter+2)
-    beta[2]  = nres
+    beta[2]  = norm(b)
     gamma    = zeros(maxIter+2)
-    gamma[1] = nres
+    gamma[1] = beta[2]
     epsil    = zeros(maxIter+2)
     delta    = zeros(maxIter+2)
     delta[2] = 0.0
     phi      = zeros(maxIter+1)
-    phi[1]   = nres
+    phi[1]   = beta[2]
     psi      = zeros(maxIter+1)
     tau      = zeros(maxIter+1)
     tau[1]   = beta[2]
@@ -93,6 +93,7 @@ function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,co
     vkm1 = zeros(eltype(b),n)
     dkm1 = zeros(eltype(b),n)
     dkm2 = zeros(eltype(b),n)
+    tt   = zeros(eltype(b),n)
     
     if out>1
 		println("=== minres ===")
@@ -126,12 +127,17 @@ function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,co
         nrmA = max(nrmA,sqrt(beta[k]^2 + alpha[k]^2 + beta[k+1]^2))
         
         if gammab != 0
-            tt = copy(dkm1)
-            dkm1  = vkm1 - deltab*dkm1 
-            dkm1 -= epsil[k]*dkm2
-            dkm1 /= gammab
-            dkm2  = tt
-            x       += tau[k]*dkm1
+            # the following line is equivalent to: tt = copy(dkm1)
+            tt = BLAS.blascopy!(n,dkm1,1,tt,1)
+            # the following two lines are equivalent to dkm1 = vkm1 - deltab*dkm1
+            dkm1 = BLAS.scal!(n,-deltab,dkm1,1)
+            dkm1 = BLAS.axpy!(n,1.0,vkm1,1,dkm1,1)
+            dkm1 = BLAS.axpy!(n,-epsil[k],dkm2,1,dkm1,1)
+            dkm1 = BLAS.scal!(n,1.0/gammab,dkm1,1)
+            dkm2 = BLAS.blascopy!(n,tt,1,dkm2,1)
+            
+            # the following line is equivalent to x    += tau[k]*dkm1
+            x    = BLAS.axpy!(n,tau[k],dkm1,1,x,1)
             gammaMin = min(gammaMin,gammab)
             conA     = nrmA/gammaMin
         end
@@ -149,23 +155,19 @@ function minres(A::Function,b;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,co
     end
     if out>=0
         if flag==-1
-            println(@sprintf("minres iterated maxIter (=%d) times but 
-                reached only residual norm %1.2e instead of tol=%1.2e.",
+            println(@sprintf("minres iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
             maxIter,phi[k]/nres,rtol))
         end
         if flag==-2
-            println(@sprintf("minres stopped because beta (=%1.2e) became
-            smaller than the tolerance (btol=%1.2e) at iteration %d.",
+            println(@sprintf("minres stopped because beta (=%1.2e) became smaller than the tolerance (btol=%1.2e) at iteration %d.",
             beta[k+1],btol,k-1))
         end
         if flag==-3
-            println(@sprintf("The estimated condition number (=%1.2e) in minres 
-            is bigger than the tolerance (=%1.2e) at iteration %d.",
+            println(@sprintf("The estimated condition number (=%1.2e) in minres is bigger than the tolerance (=%1.2e) at iteration %d.",
             conA,condlim,k-1))
         end
         if (out>0) && flag==0
-            println(@sprintf("minres converged at iteration %d. 
-            |A r_k|=%1.2e and |r_k|=%1.2e.",k-1,nrmG,phi[k]/nres))
+            println(@sprintf("minres converged at iteration %d. |A r_k|=%1.2e and |r_k|=%1.2e.",k-1,nrmG,phi[k]/nres))
         end
     end
     return x,flag,phi[k]/nres,nrmG, nrmA,phi

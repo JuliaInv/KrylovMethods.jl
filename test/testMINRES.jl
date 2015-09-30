@@ -20,7 +20,7 @@ x2,f2, = minres(Af,rhs,x=x0,maxIter=10,rtol=1e-12,gtol=1e-12,btol=1e-20,out=2)
 @test f1==0
 @test (norm(A*x1-rhs)/norm(rhs)) < 1e-11
 @test (norm(A*x2-rhs)/norm(rhs)) < 1e-11
-@test norm(x1-x2)/norm(x1) < 1e-14
+@test norm(x1-x2)/norm(x1) < 1e-12
 
 println("test stop by condlim")
 A = matrixdepot("fiedler",50)

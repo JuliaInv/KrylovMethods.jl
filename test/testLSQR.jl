@@ -11,8 +11,8 @@ r1  = A[:,1]   # compatible
 r2  = randn(3) # incompatible
 r3  = [1;1;-1.] # in the nullpace of A'
 
-x1 = lsqr(A,r1,out=2,atol=1e-8,doBidiag=true)
-@test norm(x1[1]-[1;0])<1e-10
+x1 = lsqr(A,r1,out=2,atol=1e-8,doBidiag=true,storeInterm=true)
+@test norm(x1[1][:,end]-[1;0])<1e-10
 @test x1[2]==1
 x2 = lsqr(A,r2,out=1,atol=1e-8)
 @test x2[2]==2

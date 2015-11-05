@@ -1,6 +1,7 @@
 export lsqr
 
-# x,flag,err,iter,resvec = lsqr(A,b,;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=1,doBidiag=false)
+# x,flag,err,iter,resvec = lsqr(A,b,;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=1,doBidiag=false,
+#                               storeInterm::Bool=false)
 #
 # Least Squares QR method (LSQR) for solving 
 #
@@ -27,13 +28,14 @@ export lsqr
 # 
 # Optional input:
 #  
-#   x        - starting guess (optional)
-#   maxIter  - maximum number of iterations
-#   atol     - error tolerance for (estimated) residual norm (for compatible systems)
-#   btol     - error tolerance for (estimated) gradient norm (for incompatible systems)
-#   condlim  - for stopping based on (estimated) condition number
-#   out      - flag for output (-1: no output, 0: only errors, 1: final status, 2: residual norm at each iteration)
-#   doBidiag - returns the bidiagonalization of A at the final iteration
+#   x           - starting guess (optional)
+#   maxIter     - maximum number of iterations
+#   atol        - error tolerance for (estimated) residual norm (for compatible systems)
+#   btol        - error tolerance for (estimated) gradient norm (for incompatible systems)
+#   condlim     - for stopping based on (estimated) condition number
+#   out         - flag for output (-1: no output, 0: only errors, 1: final status, 2: residual norm at each iteration)
+#   doBidiag    - returns the bidiagonalization of A at the final iteration
+#   storeInterm - store and return intermediate iterates
 #
 # Output:
 #
@@ -66,7 +68,7 @@ end
 
 
 
-function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=0,doBidiag=false,storeInterm=false)
+function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condlim=1e6,out=0,doBidiag=false,storeInterm::Bool=false)
     m  = length(b)
     
     nres0  = BLAS.nrm2(m,b,1) # norm(b)
@@ -85,6 +87,7 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
     v     = A('T',u,0.0)# A'*u
     n     = length(v)
 	x     = (isempty(x)) ? zeros(n) : x
+	if storeInterm;   X = zeros(n,maxIter) end
 	if (beta <= btol*nres0); return x,1; end
 	alpha = BLAS.nrm2(n,v,1)
 	if alpha==0; return x,2; end
@@ -96,7 +99,7 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
 
     
     # (2) perform iteration
-    maxIter = min(maxIter,n,m)
+    # maxIter = min(maxIter,n,m)
     iter = 1
     nBk  = 0.0
     nDk  = 0.0
@@ -142,7 +145,8 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
         
         # (5) update x,w
         BLAS.axpy!(n,phi/rho,w,1,x,1) # x += (phi/rho)*w
-        
+        if storeInterm; X[:,iter] = x; end
+		
         # the following two lines are equivalent to w  = v - (theta/rho)*w 
         w = BLAS.scal!(n,-theta/rho,w,1)
         w = BLAS.axpy!(n,1.0,v,1,w,1)
@@ -184,6 +188,7 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
         end
     end
 
+    x = storeInterm ? X[:,1:iter-1] : x;
     
     if doBidiag
         U = U[:,1:iter]

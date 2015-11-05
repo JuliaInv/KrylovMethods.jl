@@ -11,7 +11,7 @@ rhs = randn(100)
 tol = 1e-6;
 
 # test printing and behaviour for early stopping
-xtt = gmres(A,rhs ,3,tol=1e-10,maxIter=3,out=2)
+xtt = gmres(A,rhs ,3,tol=1e-10,maxIter=3,out=2,storeInterm=true)
 @test xtt[2]==-1
 
 # test behaviour for zero rhs

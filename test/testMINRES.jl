@@ -3,18 +3,20 @@ using KrylovMethods
 using LinearOperators
 using MatrixDepot
 
+println("=== Testing MINRES ===")
+
 A = sprandn(10,10,0.1)
 A = A'*A + 4*speye(10)
 Af(v) = A*v
 rhs = randn(10)
 rhst = copy(rhs)
 # test stop by maxIter
-x0,f0, = minres(A,rhs,maxIter=1,rtol=1e-12,gtol=1e-12,btol=1e-20,out=1)
+x0,f0, = minres(A,rhs,maxIter=1,rtol=1e-12,gtol=1e-12,btol=1e-20,out=1,storeInterm=true)
 @test f0 == -1
 
 x1,f1, = minres(A,rhs,maxIter=10,rtol=1e-12,gtol=1e-12,btol=1e-20,out=2)
 @test all(rhs.==rhst)
-x2,f2, = minres(Af,rhs,x=x0,maxIter=10,rtol=1e-12,gtol=1e-12,btol=1e-20,out=2)
+x2,f2, = minres(Af,rhs,x=x0[:,1],maxIter=10,rtol=1e-12,gtol=1e-12,btol=1e-20,out=2)
 @test all(rhs.==rhst)
 
 @test f1==0
@@ -46,3 +48,4 @@ rhs = zeros(20)
 x, = minres(Af,rhs,maxIter=20,rtol=1e-20,gtol=1e-20,btol=1e-10,condlim=1e20)
 @test all(x.==0)
 @test mv==0
+println("=== MINRES : All tests passed. ====")

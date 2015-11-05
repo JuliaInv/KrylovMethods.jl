@@ -54,7 +54,7 @@ end
 minres(A,b::Vector;kwargs...) = minres(x -> A*x,b::Vector;kwargs...)
 
 
-function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,condlim=1e10,maxIter=10,out=1)
+function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=1e-10,condlim=1e10,maxIter=10,out=1,storeInterm::Bool=false)
     
     n      = length(b)
     nres   = norm(b)
@@ -65,7 +65,10 @@ function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=
 	else
     	x = zeros(eltype(b),n)
 	end
-	
+	if storeInterm
+        X = zeros(eltype(b),n,maxIter)	# allocate space for intermediates
+    end
+    
     
     # initialize scalars (or vectors of size maxIter)
     alpha    = zeros(maxIter+1)
@@ -141,6 +144,7 @@ function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=
             gammaMin = min(gammaMin,gammab)
             conA     = nrmA/gammaMin
         end
+        if storeInterm; X[:,k-1] = x; end
         if out>1
             @printf "%d\t%1.2e\t%1.2e\t%1.2e\t\t%1.2e\n" k-1 phi[k]/nres nrmG nrmA conA 
         end
@@ -170,5 +174,7 @@ function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=
             println(@sprintf("minres converged at iteration %d. |A r_k|=%1.2e and |r_k|=%1.2e.",k-1,nrmG,phi[k]/nres))
         end
     end
+
+    x = (storeInterm) ? X[:,1:k-1] : x
     return x,flag,phi[k]/nres,nrmG, nrmA,phi
 end

@@ -9,7 +9,7 @@ M(x)  = D.\x
 rhs = randn(100)
 
 # test flag for early stopping
-xt = bicgstb(A,rhs,tol=1e-6,maxIter=3,out=2)
+xt = bicgstb(A,rhs,tol=1e-6,maxIter=3,out=2,storeInterm=true)
 @test xt[2]==-1
 
 # test handling of zero rhs

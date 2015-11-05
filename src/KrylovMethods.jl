@@ -7,7 +7,7 @@ module KrylovMethods
 	include("bicgstb.jl")
 	include("gmres.jl")	
 	include("lanczosBidiag.jl")
-	include("sor.jl")	
+	include("ssor.jl")	
 	include("lsqr.jl")	
 	include("lanczosTridiag.jl")
 	include("lanczos.jl")

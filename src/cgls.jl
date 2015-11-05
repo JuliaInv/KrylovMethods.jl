@@ -12,8 +12,8 @@ end
 cgls(A,b::Vector;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
 
 
-function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],interm::Int=0,out::Int=0)
-# x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,x=[],interm=0,out=0)
+function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[],storeInterm::Bool=false,out::Int=0)
+# x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,x=[],storeInterm=false,out=0)
 #
 # CGLS Conjugate gradient algorithm applied implicitly to the normal equations 
 # 
@@ -21,13 +21,13 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
 #
 # Input:
 #
-#	A       - function computing A*x = A(x,'F') and A'*x = A(x,'T')
-#	b       - right hand side vector
-#	tol     - error tolerance, default 1e-2
-#	maxIter - maximum number of iterations, default 100
-#	x       - starting guess
-#	interm  - flag for returning intermediate solutions (useful in inverse problems)
-#	out     - flag for output (-1: no output, 0 : only errors, 1 : final status, 2: error at each iteration)
+#	A            - function computing A*x = A(x,'F') and A'*x = A(x,'T')
+#	b            - right hand side vector
+#	tol          - error tolerance, default 1e-2
+#	maxIter      - maximum number of iterations, default 100
+#	x            - starting guess
+#	storeInterm  - flag for returning intermediate solutions (useful in inverse problems)
+#	out          - flag for output (-1: no output, 0 : only errors, 1 : final status, 2: error at each iteration)
 #
 # Output:
 #
@@ -53,7 +53,7 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
         n = length(s)
     end
     	
-    if interm==1
+    if storeInterm
         X = zeros(n,maxIter)	# allocate space for intermediates
     end
     
@@ -77,7 +77,7 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
         alpha = normSc/BLAS.dot(m,q,1,q,1)
         BLAS.axpy!(n,alpha,p,1,x,1) # faster than x    += alpha*p
         
-        if interm==1; X[:,iter] = x; end
+        if storeInterm; X[:,iter] = x; end
         
         BLAS.axpy!(m,-alpha,q,1,r,1) # faster than r  -= alpha*q
         s   = A(r,'T') # compute gradient, that is A'*r
@@ -114,7 +114,7 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
         end
     end
     
-    if interm==1
+    if storeInterm
         return X[:,1:iter],flag,rho,eta,Arn
     else
         return x,flag,rho,eta,Arn

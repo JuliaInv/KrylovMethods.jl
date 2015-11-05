@@ -8,7 +8,7 @@ end
 bicgstb(A,b; kwargs...) =  bicgstb(x -> A*x,b; kwargs...)
 
 
-function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Vector=[],out::Int=0)
+function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Vector=[],out::Int=0,storeInterm::Bool=false)
 # x,flag,err,iter,resvec = bicgstb(A,b,tol=1e-6,maxIter=100,M1=1.0,M2=1.0,x=[],out=0)
 #
 # BiConjugate Gradient Stabilized Method applied to the linear system Ax=b. 
@@ -54,6 +54,9 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 	else
 		r = b - A(x)
 	end
+    if storeInterm
+        X = zeros(eltype(b),n,maxIter)	# allocate space for intermediates
+    end
 	
 	resvec = zeros(maxIter+1)
 	bnrm2 = norm( b )
@@ -113,6 +116,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		
 		err = norm( r ) / bnrm2
 		resvec[iter+1] = err
+		if storeInterm; X[:,iter] = x; end
 		if out==2
 			println(@sprintf("%3d\t%1.2e",iter,resvec[iter+1]))
 		end
@@ -135,5 +139,9 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			println(@sprintf("bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
 		end
 	end
-	return x, flag,resvec[iter+1],iter,resvec[1:iter+1]
+	if storeInterm
+		return X[:,1:iter], flag,resvec[iter+1],iter,resvec[1:iter+1]
+	else
+		return x, flag,resvec[iter+1],iter,resvec[1:iter+1]
+	end
 end

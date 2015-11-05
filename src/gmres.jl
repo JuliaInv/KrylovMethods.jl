@@ -7,7 +7,7 @@ end
 
 gmres(A,b::Vector,restrt;kwargs...) = gmres(x -> A*x ,b,restrt;kwargs...)
 
-function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0)
+function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0,storeInterm::Bool=false)
 # x,flag,err,iter,resvec = gmres(A,b,restrt,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # Generalized Minimal residual ( GMRESm ) method with restarts applied to A*x = b.
@@ -41,6 +41,9 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
         r = M(b)
     else
         r = M(b-A(x))
+    end
+	if storeInterm
+        X = zeros(n,maxIter)	# allocate space for intermediates
     end
     
     bnrm2 = norm(b)
@@ -125,6 +128,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
         end
         y  = H[1:restrt,1:restrt]\s[1:restrt]
         x += V[:,1:restrt]*y
+        if storeInterm; X[:,iter] = x; end
         
         r = b - A(x)
         r = M(r)
@@ -142,6 +146,10 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
             println(@sprintf("gmres achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[cnt]))
         end
     end
-    return x,flag,resvec[cnt],iter,resvec[1:cnt]
+    if storeInterm
+	    return X[:,1:iter],flag,resvec[cnt],iter,resvec[1:cnt]
+	else
+	    return x,flag,resvec[cnt],iter,resvec[1:cnt]
+	end
 end
 

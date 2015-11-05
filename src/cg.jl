@@ -8,7 +8,8 @@ end
 
 cg(A,b::Vector;kwargs...) = cg(x -> A*x,b;kwargs...)
 
-function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0)
+function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0,
+	storeInterm::Bool=false)
 # x,flag,err,iter,resvec = cg(A,b,tol=1e-2,maxIter=100,M=1,x=[],out=0)
 #
 # (Preconditioned) Conjugate Gradient applied to the linear system A*x = b, where A is assumed 
@@ -46,6 +47,10 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 	end	
 	z = M(r)
 	p = copy(z)
+    
+    if storeInterm
+        X = zeros(n,maxIter)	# allocate space for intermediates
+    end
 	
 	nr0  = norm(r)
 
@@ -67,6 +72,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 		end
 		
 		BLAS.axpy!(n,alpha,p,1,x,1) # x = alpha*p+x	
+		if storeInterm; X[:,iter] = x; end
 		BLAS.axpy!(n,-alpha,Ap,1,r,1) # r -= alpha*Ap 
 	
 		resvec[iter]  = norm(r)/nr0
@@ -94,5 +100,9 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 			println(@sprintf("cg achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter]))
 		end
 	end
-	return x,flag,resvec[iter],iter,resvec[1:iter]
+    if storeInterm
+        return X[:,1:iter],flag,resvec[iter],iter,resvec[1:iter]
+    else
+        return x,flag,resvec[iter],iter,resvec[1:iter]
+    end
 end

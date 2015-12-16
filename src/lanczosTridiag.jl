@@ -1,36 +1,37 @@
 export lanczosTridiag
 
-# T,V = lanczosTridiag(A,b,k;tol,doReorth)
-#
-# Lanczos method for getting a factorization of
-#
-#    A = Vk Tk Vk'
-#
-# where A is a real symmetric n by n matrix, Tk is a tridiagonal k by k matrix and the columns of 
-# the n by k matrix Vk are orthogonal.
-#
-# Implementation follows:
-#
-# Paige, C. C. (1972). 
-# Computational variants of the Lanczos method for the eigenproblem. 
-# IMA Journal of Applied Mathematics. 
-#
-# Required input:
-#
-#   A       - function computing A*x, e.g., x -> A*x
-#   b       - right hand side vector
-#   k       - dimension of Krylov subspace
-# 
-# Optional input:
-#  
-#   tol      - stopping tolerance
-#   doReorth - (default=false) set to true to perform full reorthogonalization
-#
-# Output:
-#
-#  Tk    - sparse tridiagonal matrix
-#  Vk    - basis vectors
+"""
+T,V = lanczosTridiag(A,b,k;tol,doReorth)
 
+Lanczos method for getting a factorization of
+
+   A = Vk Tk Vk'
+
+where A is a real symmetric n by n matrix, Tk is a tridiagonal k by k matrix and the columns of 
+the n by k matrix Vk are orthogonal.
+
+Implementation follows:
+
+Paige, C. C. (1972). 
+Computational variants of the Lanczos method for the eigenproblem. 
+IMA Journal of Applied Mathematics. 
+
+Required input:
+
+  A       - function computing A*x, e.g., x -> A*x
+  b       - right hand side vector
+  k       - dimension of Krylov subspace
+
+Optional input:
+ 
+  tol      - stopping tolerance
+  doReorth - (default=false) set to true to perform full reorthogonalization
+
+Output:
+
+ Tk    - sparse tridiagonal matrix
+ Vk    - basis vectors
+"""
 function lanczosTridiag{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},k; kwargs...) 
 	x = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
 	return lanczosTridiag(v -> At_mul_B!(1.0,A,v,0.0,x),b,k;kwargs...) # multiply with transpose of A for efficiency

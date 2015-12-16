@@ -1,12 +1,15 @@
 
-# Performs a Lanczos step
-#
-# Implementation is based on Table 2.1 in
-#
-# Choi, S.-C. T. (2006). 
-# Iterative Methods for Singular Linear Equations and Least-squares Problems. 
-# Phd thesis, Stanford University.
-# 
+"""
+alpha,beta,vk,vkm1 = LanczosStep!(A::Function,vk,vkm1,beta;sigma=0.0,tol=1e-10)
+
+Performs a Lanczos step
+
+Implementation is based on Table 2.1 in
+
+Choi, S.-C. T. (2006). 
+Iterative Methods for Singular Linear Equations and Least-squares Problems. 
+Phd thesis, Stanford University.
+"""
 function LanczosStep!(A::Function,vk,vkm1,beta;sigma=0.0,tol=1e-10)
     n     = length(vk)
     
@@ -28,14 +31,17 @@ function LanczosStep!(A::Function,vk,vkm1,beta;sigma=0.0,tol=1e-10)
 end
 
 
-# Computes a Givens rotation
-#
-# Implementation is based on Table 2.9 in
-#
-# Choi, S.-C. T. (2006). 
-# Iterative Methods for Singular Linear Equations and Least-squares Problems. 
-# Phd thesis, Stanford University.
-# 
+"""
+c,s,r = SymOrtho(a,b)
+
+Computes a Givens rotation
+
+Implementation is based on Table 2.9 in
+
+Choi, S.-C. T. (2006). 
+Iterative Methods for Singular Linear Equations and Least-squares Problems. 
+Phd thesis, Stanford University.
+"""
 function symOrtho(a,b)
     c = 0.0; s = 0.0; r = 0.0
 	if b==0

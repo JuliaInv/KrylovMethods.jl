@@ -21,7 +21,7 @@ x3,flag3,relres3,iter3,resvec3     = ssor(A,rhs,tol=tol,maxIter=100,omega=1/2,ou
 @test norm(A*x2-rhs)/norm(rhs) <= tol
 @test norm(A*x3[:,end]-rhs)/norm(rhs) <= tol
 
-# test as preconditioner for CG
+println("=== Testing SSOR as Preconditioner ===")
 omega = 1.2;
 d = omega./diag(A);
 x = zeros(length(rhs)) # pre allocation for the preconditioner result.

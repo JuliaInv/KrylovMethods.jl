@@ -31,7 +31,7 @@ println("=== Testing Lanczos Tridiagonalization ===")
 # test stopping for low-rank matrix
 A = randn(100,10)
 H = A*A'
-T,V = lanczosTridiag(H,ones(100),100)
+T,V = lanczosTridiag(H,ones(100),100,doReorth=true)
 @test size(T,1)==11
 @test size(V,2)==11
 

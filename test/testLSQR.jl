@@ -37,7 +37,7 @@ x3  = lsqr(Af,rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)
 @test norm(x2[1]-x3[1])/norm(x3[1]) < 1e-12
 
 # test with dense hilbert matrix
-A   = matrixdepot("hilb",10,3)
+A   = matrixdepot("hilb",3,3)
 rhs = randn(size(A,1))
 xgt = A\rhs
 

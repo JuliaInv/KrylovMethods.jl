@@ -62,7 +62,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
     e1    = zeros(n)
     e1[1] = 1.0
     
-    if iseltype(b,Complex) || iseltype(r,Complex) || iseltype(A,Complex)
+    if eltype(b) <: Complex || eltype(r) <: Complex || eltype(A) <: Complex
         e1 = complex(e1)
         b  = complex(b)
         r  = complex(r)

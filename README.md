@@ -8,7 +8,7 @@
 KrylovMethods.jl
 =========================
 
-&copy; 2014 [Lars Ruthotto](http://www.eos.ubc.ca/about/researcher/L.Ruthotto.html). Released under the [MIT License](https://github.com/lruthotto/KrylovMethods.jl/blob/master/LICENSE).
+Released under the [MIT License](https://github.com/lruthotto/KrylovMethods.jl/blob/master/LICENSE).
 
 Simple and fast Julia implementation of Krylov subspace methods for linear systems.
 

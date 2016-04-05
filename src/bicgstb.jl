@@ -89,8 +89,9 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		
 		p_hat = M1f(p)      # compute M1\p
 		p_hat = M2f(p_hat)  # compute M2\phat
-		v     = A(p_hat)    # compute A*phat
-	
+		t     = A(p_hat)    # compute A*phat
+		v[:] = t;
+		
 		alpha = rho / ( dot(r_tld,v) )
 		# the following two lines do: s = r - alpha*v
 		s = BLAS.blascopy!(n,r,1,s,1)
@@ -103,8 +104,8 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		end
 		s_hat = M1f(s)      # compute M1\s
 		s_hat = M2f(s_hat)  # compute M2\shat
-		v     = A(s_hat)    # compute A*shat
-		omega = ( dot(v,s)) / ( dot(v,v) )
+		t     = A(s_hat)    # compute A*shat
+		omega = ( dot(t,s)) / ( dot(t,t) )
 		
 		# The following three lines do: x += alpha*p_hat + omega*s_hat
 		BLAS.scal!(n,alpha,p_hat,1)
@@ -113,7 +114,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		
 		# the following two lines do: r = s - omega * t
 		r = BLAS.blascopy!(n,s,1,r,1)
-		BLAS.axpy!(n,-omega,v,1,r,1)
+		BLAS.axpy!(n,-omega,t,1,r,1)
 		
 		err = norm( r ) / bnrm2
 		resvec[iter+1] = err

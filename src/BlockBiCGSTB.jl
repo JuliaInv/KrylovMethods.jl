@@ -3,13 +3,13 @@ export BlockBiCGSTB
 
 function BlockBiCGSTAB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
 	TYPE = promote_type(T1,T2);
-	Ax = zeros(TYPE,size(b));                  # pre-allocate	
-	return BlockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); # multiply with transpose of A for efficiency
+	Ax = zeros(TYPE,size(b));                
+	return BlockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); 
 end
 
 BlockBiCGSTB(A,b; kwargs...) =  BlockBiCGSTB(x -> A*x,b; kwargs...)
 
-function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Array=[],out::Int=0)
+function BlockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Array=[],out::Int=0)
 
 	n   = size(b,1);
 	m   = size(b,2);
@@ -22,10 +22,8 @@ function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M
 	M1f =  isa(M1,Function) ? M1 : x -> M1\x
 	M2f =  isa(M2,Function) ? M2 : x -> M2\x
 	
-	TYPE = eltype(b);
-	
-	constOne = one(TYPE);
-	constZero = zero(TYPE);
+	constOne = one(T);
+	constZero = zero(T);
 	
 	if length(x)==0
 		x = zeros(eltype(b),n,m)
@@ -38,8 +36,8 @@ function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M
 		r = b - A(x);
 		r_tld = copy(r); # We are not changing r_tld in this function, but we do change r;
 	end
-	v 	= zeros(TYPE,n,m);
-    p   = copy(r);   ### ALLOCATION
+	v 	= zeros(T,n,m);
+    p   = copy(r);   
 	
 	resvec = zeros(maxIter+1)
 	bnrm2 = vecnorm( b )
@@ -71,8 +69,8 @@ function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M
 			# the next lines do: p = r + (p-v*omega)*beta; We run over v here...
 			BLAS.scal!(N,-omega,v,1); 									# v = -v*omega
 			BLAS.axpy!(N,constOne,p,1,v,1); 							# v += p;
-			BLAS.gemm!('N','N', constOne, v, beta,constZero,p); 		#equivalent to p = v*beta;
-			BLAS.axpy!(N,constOne,r,1,p,1); 							#equivalent to p = p + r
+			BLAS.gemm!('N','N', constOne, v, beta,constZero,p); 		# p = v*beta;
+			BLAS.axpy!(N,constOne,r,1,p,1); 							# p = p + r
 		end
 
 		p_hat = M1f(p);      # compute M1\p
@@ -85,7 +83,7 @@ function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M
 		RtV = BLAS.gemm('C','N', constOne, r_tld, v); 					# RtV = r_tld'*v;
 		alpha = RtV\rho; 
 		BLAS.gemm!('N','N', constOne, p_hat, alpha,constOne,x); 		# x = x + p_hat*alpha # After this line p_hat is done.
-		BLAS.gemm!('N','N', -constOne, v, alpha,constOne,r);  			#r = r - v*alpha;
+		BLAS.gemm!('N','N', -constOne, v, alpha,constOne,r);  			# r = r - v*alpha;
 
 		resid = vecnorm( r ) / bnrm2
 		if ( resid < tol )

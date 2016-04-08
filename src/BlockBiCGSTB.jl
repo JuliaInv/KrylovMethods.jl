@@ -1,15 +1,15 @@
 
-export BlockBiCGSTAB
+export BlockBiCGSTB
 
 function BlockBiCGSTAB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
 	TYPE = promote_type(T1,T2);
 	Ax = zeros(TYPE,size(b));                  # pre-allocate	
-	return BlockBiCGSTAB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); # multiply with transpose of A for efficiency
+	return BlockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); # multiply with transpose of A for efficiency
 end
 
-BlockBiCGSTAB(A,b; kwargs...) =  BlockBiCGSTAB(x -> A*x,b; kwargs...)
+BlockBiCGSTB(A,b; kwargs...) =  BlockBiCGSTB(x -> A*x,b; kwargs...)
 
-function BlockBiCGSTAB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Array=[],out::Int=0)
+function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Array=[],out::Int=0)
 
 	n   = size(b,1);
 	m   = size(b,2);
@@ -27,7 +27,7 @@ function BlockBiCGSTAB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, 
 	constOne = one(TYPE);
 	constZero = zero(TYPE);
 	
-	if x==[]
+	if length(x)==0
 		x = zeros(eltype(b),n,m)
 		r = copy(b)
 		r_tld = b; # We are not changing r_tld in this function, so we assign it to point to b that is also held constant.
@@ -61,7 +61,6 @@ function BlockBiCGSTAB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, 
 	RtV = [];
 	t = [];
 	for iter = 1:maxIter
-		
 		rho = BLAS.gemm('C','N', constOne, r_tld, r); 				# equivalent to rho   = r_tld'*r;
 		
 		if ( vecnorm(rho) < 1e-13 ); flag = -2; break; end
@@ -75,10 +74,12 @@ function BlockBiCGSTAB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, 
 			BLAS.gemm!('N','N', constOne, v, beta,constZero,p); 		#equivalent to p = v*beta;
 			BLAS.axpy!(N,constOne,r,1,p,1); 							#equivalent to p = p + r
 		end
-		
+
 		p_hat = M1f(p);      # compute M1\p
 		p_hat = M2f(p_hat) ; # compute M2\phat
+
 		t     = A(p_hat);    # compute A*phat
+
 		v[:]  = t;
 		
 		RtV = BLAS.gemm('C','N', constOne, r_tld, v); 					# RtV = r_tld'*v;
@@ -91,11 +92,14 @@ function BlockBiCGSTAB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, 
 			iter -=1	
 			flag  = -3; break 
 		end
+		
 		s_hat = M1f(r)      # compute M1\r Note that it might be that M1f and M2f return the same memory vector.
 		s_hat = M2f(s_hat)  # compute M2\shat
+		
 		t     = A(s_hat)    # compute A*shat
 		
 		omega = vecdot(t,r) / vecdot(t,t) ;
+		
 		BLAS.axpy!(N,omega,s_hat,1,x,1); 	# x = x + s_hat*omega
 		BLAS.axpy!(N,-omega,t,1,r,1); 		# r = r - omega * t
 		
@@ -108,6 +112,7 @@ function BlockBiCGSTAB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, 
 			flag = 0; break
 		end
 		if norm(omega) < 1e-16; flag = -4; break; end
+		
 	end
 	if out>=0
 		if flag==-1

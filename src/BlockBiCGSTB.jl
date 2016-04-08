@@ -55,7 +55,7 @@ function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M
 	rho1 = 0.0
 	
 	if out==2
-		println("=== bicgstb ===")
+		println("=== block bicgstb ===")
 		println(@sprintf("%4s\t%7s","iter","relres"))
 	end
 	RtV = [];
@@ -116,14 +116,14 @@ function BlockBiCGSTB(A::Function, b::Array; tol::Real=1e-6, maxIter::Int=100, M
 	end
 	if out>=0
 		if flag==-1
-			println(@sprintf("bicgstb iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
+			println(@sprintf("block bicgstb iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
 																								maxIter,resvec[iter],tol))
 		elseif flag==-2
-			println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
+			println(@sprintf("block bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
 		elseif flag==-4
-			println(@sprintf("bicgstb : omega < 1e-16"))
+			println(@sprintf("block bicgstb : omega < 1e-16"))
 		elseif out>=1
-			println(@sprintf("bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+			println(@sprintf("block bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
 		end
 	end
 	return x, flag,resvec[iter+1],iter,resvec[1:iter+1]

@@ -1,17 +1,17 @@
 
-export BlockBiCGSTB
+export blockBiCGSTB
 
-function BlockBiCGSTAB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
+function BlockBiCGSTB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
 	TYPE = promote_type(T1,T2);
 	Ax = zeros(TYPE,size(b));                
-	return BlockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); 
+	return blockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); 
 end
 
-BlockBiCGSTB(A,b; kwargs...) =  BlockBiCGSTB(x -> A*x,b; kwargs...)
+blockBiCGSTB(A,b; kwargs...) =  blockBiCGSTB(x -> A*x,b; kwargs...)
 
 
 """
-x,flag,err,iter,resvec = BlockBiCGSTB(A,b,tol=1e-6,maxIter=100,M1=identity,M2=identity,x=[],out=0)
+x,flag,err,iter,resvec = blockBiCGSTB(A,b,tol=1e-6,maxIter=100,M1=identity,M2=identity,x=[],out=0)
 
 Block version of BiConjugate Gradient Stabilized Method applied to the linear system Ax=b with multiple right hand sides.
 
@@ -45,7 +45,7 @@ Output:
 """
 
 
-function BlockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0)
+function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0)
 
 	n   = size(b,1);
 	m   = size(b,2);
@@ -150,14 +150,14 @@ function BlockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 	end
 	if out>=0
 		if flag==-1
-			println(@sprintf("block bicgstb iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
+			println(@sprintf("blockBiCGSTB iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
 																								maxIter,resvec[iter],tol))
 		elseif flag==-2
-			println(@sprintf("block bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
+			println(@sprintf("blockBiCGSTB: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
 		elseif flag==-4
-			println(@sprintf("block bicgstb : omega < 1e-16"))
+			println(@sprintf("blockBiCGSTB: omega < 1e-16"))
 		elseif out>=1
-			println(@sprintf("block bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+			println(@sprintf("blockBiCGSTB achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
 		end
 	end
 	return x, flag,resvec[iter+1],iter,resvec[1:iter+1]

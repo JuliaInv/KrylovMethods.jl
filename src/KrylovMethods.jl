@@ -5,7 +5,7 @@ module KrylovMethods
 	include("cg.jl")
 	include("cgls.jl")
 	include("bicgstb.jl")
-	include("BlockBiCGSTB.jl")
+	include("blockBiCGSTB.jl")
 	include("gmres.jl")	
 	include("lanczosBidiag.jl")
 	include("ssor.jl")	

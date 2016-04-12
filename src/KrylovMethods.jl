@@ -3,6 +3,7 @@ module KrylovMethods
 	import Base.BLAS
 	
 	include("cg.jl")
+	include("blockCG.jl")
 	include("cgls.jl")
 	include("bicgstb.jl")
 	include("blockBiCGSTB.jl")
@@ -13,4 +14,5 @@ module KrylovMethods
 	include("lanczosTridiag.jl")
 	include("lanczos.jl")
 	include("minres.jl")
+	include("gs.jl")
 end

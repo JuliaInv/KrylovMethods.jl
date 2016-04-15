@@ -1,7 +1,7 @@
 
 export blockBiCGSTB
 
-function BlockBiCGSTB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
+function blockBiCGSTB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
 	TYPE = promote_type(T1,T2);
 	Ax = zeros(TYPE,size(b));                
 	return blockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); 

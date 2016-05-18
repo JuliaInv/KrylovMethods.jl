@@ -1,6 +1,7 @@
 include("testBICGSTB.jl")
 include("testBlockBiCGSTB.jl")
 include("testCG.jl")
+include("testBlockCG.jl")
 include("testCGLS.jl")
 include("testGMRES.jl")
 include("testLANCZOS.jl")

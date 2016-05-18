@@ -82,7 +82,6 @@ for iter=1:maxIter
 	BLAS.gemm!('T','N',1.0,P,Q,0.0,PTQ)
 
     # Alpha = (PTQ)\(P'*R);
-    PTR = P'*R
     BLAS.gemm!('T','N',1.0,P,R,0.0,PTR)
 	pinvPTQ = getPinv!(PTQ,pinvTol)
     Alpha = pinvPTQ*PTR
@@ -108,7 +107,7 @@ for iter=1:maxIter
     Beta  = -pinvPTQ*QTZ
     
     if ortho     
-        P,     =  mgs(Z + P*Beta)
+        P,     =  mgs!(Z + P*Beta)
     else
 	    P     = Z  + P*Beta;
 	end

@@ -2,6 +2,11 @@ module KrylovMethods
 	
 	import Base.BLAS
 	
+	preconditioner(M::Function,p::Vector) = M(p)
+	preconditioner(M::AbstractArray,p::Vector) = M\p
+	preconditioner(M::Vector,p::Vector) = M.\p
+	
+	
 	include("cg.jl")
 	include("blockCG.jl")
 	include("cgls.jl")

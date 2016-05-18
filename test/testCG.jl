@@ -40,8 +40,23 @@ SGS(x) = L\(D.*(U\x))
 rhs = randn(size(A,1))
 tolCG = 1e-5
 # tests with A being matrix
-xCG,flagCG,relresCG,iterCG,resvecCG       = cg(A,rhs,tol=tolCG,maxIter=100)
-xJAC,flagJAC,relresJAC,iterJAC,resvecJAC  = cg(A,rhs,tol=tolCG,maxIter=100,M=JAC,out=1)
+xCG,flagCG,relresCG,iterCG,resvecCG            = cg(A,rhs,tol=tolCG,maxIter=100)
+xJAC,flagJAC,relresJAC,iterJAC,resvecJAC       = cg(A,rhs,tol=tolCG,maxIter=100,M=JAC,out=1)
+xJACv,flagJACv,relresJACv,iterJACv,resvecJACv  = cg(A,rhs,tol=tolCG,maxIter=100,M=D,out=1)
+xJACm,flagJACm,relresJACm,iterJACm,resvecJACm  = cg(A,rhs,tol=tolCG,maxIter=100,M=spdiagm(D,0,n,n),out=1)
+@test norm(xJAC-xJACm)/norm(xJAC) < 1e-10
+@test flagJAC == flagJACm
+@test_approx_eq relresJAC relresJACm
+@test iterJAC==iterJACm
+@test_approx_eq resvecJAC resvecJACm
+@test norm(xJAC-xJACv)/norm(xJAC) < 1e-10
+@test flagJAC == flagJACv
+@test_approx_eq relresJAC relresJACv
+@test iterJAC==iterJACv
+@test_approx_eq resvecJAC resvecJACv
+
+
+
 xSGS,flagSGS,relresSGS,iterSGS,resvecSGS  = cg(A,rhs,tol=tolCG,maxIter=100,M=SGS)
 # tests with A being function
 xCGmf,flagCG,relresCG,iterCG,resvecCG       = cg(Alinop,rhs,tol=tolCG,maxIter=100)

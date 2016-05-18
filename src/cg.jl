@@ -20,7 +20,7 @@ Input:
   b       - right hand side vector
   tol     - error tolerance
   maxIter - maximum number of iterations
-  M       - preconditioner, a function that computes M\\x
+  M       - preconditioner, either a function that computes M\\x or a matrix or vector such that M\\x is computed
   x       - starting guess
   out     - flag for output (-1: no output, 0: only errors, 1: final status, 2: residual norm at each iteration)
 
@@ -36,7 +36,7 @@ Output:
   iter    - number of iterations
   resvec  - norm of relative residual at each iteration
 """
-function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0,
+function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=identity,x::Vector=[],out::Int=0,
 	storeInterm::Bool=false)
 	n = length(b)
 	
@@ -47,7 +47,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 	else
 		r = b - A(x)
 	end	
-	z = M(r)
+	z = preconditioner(M,r)
 	p = copy(z)
     
     if storeInterm
@@ -85,7 +85,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 			flag = 0; break
 		end
 				
-		z    = M(r)
+		z    = preconditioner(M,r)
 		beta = dot(z,r)/gamma
 		# the following two lines are equivalent to p = z + beta*p
 		p = BLAS.scal!(n,beta,p,1)

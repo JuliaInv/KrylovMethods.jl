@@ -20,7 +20,7 @@ Input:
   b       - right hand side vector
   tol     - error tolerance
   maxIter - maximum number of iterations
-  M       - preconditioner, either a function that computes M\\x or a matrix or vector such that M\\x is computed
+  M       - preconditioner. Type such that applyPrecond(M,x) can be called
   x       - starting guess
   out     - flag for output (-1: no output, 0: only errors, 1: final status, 2: residual norm at each iteration)
 
@@ -47,7 +47,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=identity,x:
 	else
 		r = b - A(x)
 	end	
-	z = preconditioner(M,r)
+	z = applyPrecond(M,r)
 	p = copy(z)
     
     if storeInterm
@@ -85,7 +85,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M=identity,x:
 			flag = 0; break
 		end
 				
-		z    = preconditioner(M,r)
+		z    = applyPrecond(M,r)
 		beta = dot(z,r)/gamma
 		# the following two lines are equivalent to p = z + beta*p
 		p = BLAS.scal!(n,beta,p,1)

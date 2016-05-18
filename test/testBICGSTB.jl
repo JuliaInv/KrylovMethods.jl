@@ -43,7 +43,7 @@ rhs = randn(100) + 1im * randn(100)
 x1 = bicgstb(A,rhs,tol=1e-6)
 x2 = bicgstb(Af,rhs,tol=1e-6)
 x3 = bicgstb(Af,rhs,tol=1e-6,maxIter=200,x=randn(size(rhs))+im*randn(size(rhs)))
-x4 = bicgstb(Af,rhs,tol=1e-6,maxIter=200,M1=M)
+x4 = bicgstb(Af,rhs,tol=1e-6,maxIter=200,M1=D)
 
 @test norm(A*x1[1]-rhs)/norm(rhs) < 1e-6
 @test norm(A*x2[1]-rhs)/norm(rhs) < 1e-6

@@ -26,6 +26,8 @@ xtt = gmres(A,0*rhs,5,tol=tol,maxIter=10,out=2)
 x1 = gmres(A,rhs ,5,tol=tol,maxIter=100,out=1)
 x3 = gmres(A,rhs,5,tol=tol,maxIter=100,x=randn(size(rhs)))
 x4 = gmres(A,rhs,5,tol=tol,maxIter=100,M=M2)
+x5 = gmres(A,rhs,5,tol=tol,maxIter=100,M=D)
+@test all(x4[1].==x5[1])
 
 @test norm(A*x1[1]-rhs)/norm(rhs) < tol
 @test norm(A*x3[1]-rhs)/norm(rhs) < tol

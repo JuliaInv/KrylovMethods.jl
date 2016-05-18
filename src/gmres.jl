@@ -33,16 +33,16 @@ Output:
   iter    - number of iterations
   resvec  - norm of relative residual at each iteration
 """
-function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=identity,x::Vector=[],out::Int=0,storeInterm::Bool=false)
+function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M=identity,x::Vector=[],out::Int=0,storeInterm::Bool=false)
     
     # initialization
     n  = length(b)
 	if norm(b)==0; return zeros(eltype(b),n),-9,0.0,0,[0.0]; end
     if isempty(x)
         x = zeros(n)
-        r = M(b)
+        r = applyPrecond(M,b)
     else
-        r = M(b-A(x))
+        r = applyPrecond(M,b-A(x))
     end
 	if storeInterm
         X = zeros(n,maxIter)	# allocate space for intermediates
@@ -89,7 +89,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
         
         for i = 1:restrt
             w = A(V[:,i])
-            w = M(w)
+            w = applyPrecond(M,w)
             
             for k = 1:i # basis using Gram-Schmidt
                 H[k,i] = dot(w,V[:,k])
@@ -133,7 +133,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
         if storeInterm; X[:,iter] = x; end
         
         r = b - A(x)
-        r = M(r)
+        r = applyPrecond(M,r)
         
         s[restrt+1] = norm(r)
         resvec[cnt] = abs(s[restrt+1]) / bnrm2

@@ -23,4 +23,20 @@ X,flag = blockCG(A,zeros(2,2),out=2)
 A      = getDivGrad(8,8,8)
 rhs    = randn(size(A,1),10)
 X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=2,storeInterm=false,ortho=true);
-@test norm(A*X-rhs)/norm(rhs) < 1.1e-3
+@test norm(A*X-rhs)/norm(rhs) < 1.5e-3
+
+# use preconditioning
+L = tril(A)
+D = diag(A)
+U = triu(A)
+n = size(A,1)
+JAC(x) = D.\x
+SGS(x) = L\(D.*(U\x))
+X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=0,storeInterm=false,ortho=true,M=D);
+@test norm(A*X-rhs)/norm(rhs) < 1.5e-3
+
+X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=0,storeInterm=false,ortho=true,M=SGS);
+@test norm(A*X-rhs)/norm(rhs) < 1.5e-3
+
+
+

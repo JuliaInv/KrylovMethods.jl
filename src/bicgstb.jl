@@ -39,8 +39,6 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 
 	n   = length(b)
 	if norm(b)==0; return zeros(eltype(b),n),-9; end
-	M1f =  isa(M1,Function) ? M1 : x -> M1\x
-	M2f =  isa(M2,Function) ? M2 : x -> M2\x
 	
 	# allocate v,t,p_hat,s_hat
 	v     = zeros(eltype(b),n)
@@ -87,8 +85,8 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			BLAS.axpy!(n,one(eltype(p)),r,1,p,1)
 		end
 		
-		p_hat = M1f(p)      # compute M1\p
-		p_hat = M2f(p_hat)  # compute M2\phat
+		p_hat = applyPrecond(M1,p)      # compute M1\p
+		p_hat = applyPrecond(M2,p_hat)  # compute M2\phat
 		t     = A(p_hat)    # compute A*phat
 		v[:] = t;
 		
@@ -102,8 +100,8 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			resid = norm( s ) / bnrm2
 			flag  = -3; break 
 		end
-		s_hat = M1f(s)      # compute M1\s
-		s_hat = M2f(s_hat)  # compute M2\shat
+		s_hat = applyPrecond(M1,s)      # compute M1\s
+		s_hat = applyPrecond(M2,s_hat)  # compute M2\shat
 		t     = A(s_hat)    # compute A*shat
 		omega = ( dot(t,s)) / ( dot(t,t) )
 		

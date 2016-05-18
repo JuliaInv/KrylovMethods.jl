@@ -44,12 +44,12 @@ Reference:
 	Linear Algebra and Its Applications, 29, 293–322. http://doi.org/10.1016/0024-3795(80)90247-5
 
 """
-function blockCG{T<:AbstractFloat}(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)
+function blockCG{T<:AbstractFloat}(A::Function,B::Array{T};X=zeros(T,size(B)),M=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 	
 R = copy(B)
-Z = M(R)
+Z = applyPrecond(M,R)
 if ortho
     P, = mgs(Z)
 else
@@ -102,7 +102,7 @@ for iter=1:maxIter
         break;
     end
     
-    Z     = M(R)
+    Z     = applyPrecond(M,R)
     #Beta  = -(PTQ)\(Q'*Z);
 	BLAS.gemm!('T','N',1.0,Q,Z,0.0,QTZ)
     Beta  = -pinvPTQ*QTZ

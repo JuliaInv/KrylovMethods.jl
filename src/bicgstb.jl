@@ -93,28 +93,25 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		v[:] = t;
 		
 		alpha = rho / ( dot(r_tld,v) )
-		# the following two lines do: s = r - alpha*v
-		s = BLAS.blascopy!(n,r,1,s,1)
-		s = BLAS.axpy!(n,-alpha,v,1,s,1)
-		if ( norm(s)/bnrm2 < tol )
+		
+		BLAS.axpy!(n,alpha,p_hat,1,x,1) # x = x + alpha*p_hat
+		BLAS.axpy!(n,-alpha,v,1,r,1)	# r = r - alpha*v
+		
+		if ( norm(r)/bnrm2 < tol )
 			iter -=1
-			BLAS.axpy!(n,alpha,p_hat,1,x,1) # x = x + alpha*p_hat
-			resid = norm( s ) / bnrm2
+			resid = norm( r ) / bnrm2
 			flag  = -3; break 
-		end
-		s_hat = M1f(s)      # compute M1\s
+		end	
+		
+		# p_hat must not be used beyond this point because M2 or M1 might be using the same memory for s_hat.
+		s_hat = M1f(r)      # compute M1\s
 		s_hat = M2f(s_hat)  # compute M2\shat
 		t     = A(s_hat)    # compute A*shat
-		omega = ( dot(t,s)) / ( dot(t,t) )
+		omega = ( dot(t,r)) / ( dot(t,t) )
 		
-		# The following three lines do: x += alpha*p_hat + omega*s_hat
-		BLAS.scal!(n,alpha,p_hat,1)
-		BLAS.axpy!(n,omega,s_hat,1,p_hat,1)
-		BLAS.axpy!(n,one(eltype(x)),p_hat,1,x,1)
 		
-		# the following two lines do: r = s - omega * t
-		r = BLAS.blascopy!(n,s,1,r,1)
-		BLAS.axpy!(n,-omega,t,1,r,1)
+		BLAS.axpy!(n,-omega,t    ,1,r,1) # r = r - omega * t
+		BLAS.axpy!(n,omega ,s_hat,1,x,1) # x = x + omega * s_hat
 		
 		err = norm( r ) / bnrm2
 		resvec[iter+1] = err

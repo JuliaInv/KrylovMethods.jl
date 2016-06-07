@@ -51,9 +51,16 @@ if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 R = copy(B)
 Z = M(R)
 if ortho
-    P, = mgs(Z)
+    P, = mgs(Z);
 else
-    P = Z
+	if R == Z
+		# this means that Z and R are the same memory.
+		P = copy(Z); #P must be different memory than R.
+	else
+		# this means that Z and R are NOT the same memory.
+		# P and Z may share the same memory in this case.
+		P = Z;
+	end
 end
  
 n, nrhs = size(X)
@@ -106,13 +113,14 @@ for iter=1:maxIter
 	BLAS.gemm!('T','N',1.0,Q,Z,0.0,QTZ)
     Beta  = -pinvPTQ*QTZ
     
-    if ortho
-        P,     =  mgs!(Z + P*Beta)
-    else
-		BLAS.gemm!('N','N',1.0,P,Beta,1.0,Z);
-		P[:] = Z;
-	    # P     = Z  + P*Beta;
-	end
+	# Z might be just R here - don't overwite it! Q is not needed.
+	Q[:] = Z;
+	BLAS.gemm!('N','N',1.0,P,Beta,1.0,Q);
+	P[:] = Q;
+		
+    if ortho     
+        P,     =  mgs!(P)
+ 	end
 end
 if out>=0
 	if flag==-1

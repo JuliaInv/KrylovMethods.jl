@@ -106,10 +106,12 @@ for iter=1:maxIter
 	BLAS.gemm!('T','N',1.0,Q,Z,0.0,QTZ)
     Beta  = -pinvPTQ*QTZ
     
-    if ortho     
+    if ortho
         P,     =  mgs!(Z + P*Beta)
     else
-	    P     = Z  + P*Beta;
+		BLAS.gemm!('N','N',1.0,P,Beta,1.0,Z);
+		P[:] = Z;
+	    # P     = Z  + P*Beta;
 	end
 end
 if out>=0

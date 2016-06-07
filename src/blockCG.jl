@@ -53,14 +53,7 @@ Z = M(R)
 if ortho
     P, = mgs(Z);
 else
-	if R == Z
-		# this means that Z and R are the same memory.
-		P = copy(Z); #P must be different memory than R.
-	else
-		# this means that Z and R are NOT the same memory.
-		# P and Z may share the same memory in this case.
-		P = Z;
-	end
+	P = copy(Z); #P must be different memory than Z and R.
 end
  
 n, nrhs = size(X)

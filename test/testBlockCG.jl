@@ -27,10 +27,3 @@ X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=2,maxIter=200,storeInterm
 X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=2,maxIter=200,storeInterm=false,ortho=false);
 @test norm(A*X-rhs)/norm(rhs) < 1.5e-3
 
-MM(X) = copy(X);
-X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=2,maxIter=200,storeInterm=false,ortho=true,M=MM);
-@test norm(A*X-rhs)/norm(rhs) < 1.5e-3
-X,flag,relres,iter,resvec = blockCG(A,rhs,tol=1e-3,out=2,maxIter=200,storeInterm=false,ortho=false,M=MM);
-@test norm(A*X-rhs)/norm(rhs) < 1.5e-3
-
-

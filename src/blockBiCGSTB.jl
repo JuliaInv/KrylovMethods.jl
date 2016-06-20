@@ -78,8 +78,8 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 	resvec = zeros(maxIter+1)
 	bnrm2 = vecnorm( b )
 	
-	rnorm   = vecnorm( r ) / bnrm2; 
-	resvec[1] = rnorm
+	resid   = vecnorm( r ) / bnrm2; 
+	resvec[1] = resid
 	
 	alpha = 1.0
 	omega = 1.0
@@ -137,12 +137,12 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 		BLAS.axpy!(N,omega,s_hat,1,x,1); 	# x = x + s_hat*omega
 		BLAS.axpy!(N,-omega,t,1,r,1); 		# r = r - omega * t
 		
-		rnorm = vecnorm( r ) / bnrm2
-		resvec[iter+1] = rnorm
+		resid = vecnorm( r ) / bnrm2
+		resvec[iter+1] = resid
 		if out==2
 			println(@sprintf("%3d\t%1.2e",iter,resvec[iter+1]))
 		end
-		if ( rnorm <= tol )
+		if ( resid <= tol )
 			flag = 0; break
 		end
 		if norm(omega) < 1e-16; flag = -4; break; end
@@ -157,7 +157,11 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 		elseif flag==-4
 			println(@sprintf("blockBiCGSTB: omega < 1e-16"))
 		elseif out>=1
-			println(@sprintf("blockBiCGSTB achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+			if flag == -3
+				println(@sprintf("blockBiCGSTB achieved desired tolerance at iteration %d.5. Residual norm is %1.2e.",iter,resid))
+			else
+				println(@sprintf("blockBiCGSTB achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+			end
 		end
 	end
 	return x, flag,resvec[iter+1],iter,resvec[1:iter+1]

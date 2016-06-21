@@ -61,8 +61,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 	
 	resvec = zeros(maxIter+1)
 	bnrm2 = norm( b )
-	
-	err   = norm( r ) / bnrm2; resvec[1] = err
+	resid = norm( r ) / bnrm2; resvec[1] = resid
 	alpha = 1.0
 	omega = 1.0
 	r_tld = copy(r)
@@ -96,10 +95,10 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		
 		BLAS.axpy!(n,alpha,p_hat,1,x,1) # x = x + alpha*p_hat
 		BLAS.axpy!(n,-alpha,v,1,r,1)	# r = r - alpha*v
-		
-		if ( norm(r)/bnrm2 < tol )
+		resid = norm(r)/bnrm2;
+		if ( resid < tol )
 			iter -=1
-			resid = norm( r ) / bnrm2
+
 			flag  = -3; break 
 		end	
 		
@@ -113,13 +112,13 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		BLAS.axpy!(n,-omega,t    ,1,r,1) # r = r - omega * t
 		BLAS.axpy!(n,omega ,s_hat,1,x,1) # x = x + omega * s_hat
 		
-		err = norm( r ) / bnrm2
-		resvec[iter+1] = err
+		resid = norm( r ) / bnrm2
+		resvec[iter+1] = resid
 		if storeInterm; X[:,iter] = x; end
 		if out==2
 			println(@sprintf("%3d\t%1.2e",iter,resvec[iter+1]))
 		end
-		if ( err <= tol )
+		if ( resid <= tol )
 			flag = 0; break
 		end
 		
@@ -131,11 +130,15 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			println(@sprintf("bicgstb iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
 																								maxIter,resvec[iter],tol))
 		elseif flag==-2
-			println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]))
+			println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]));
 		elseif flag==-4
 			println(@sprintf("bicgstb : omega < 1e-16"))
 		elseif out>=1
-			println(@sprintf("bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+			if flag == -3
+				println(@sprintf("bcgstb achieved desired tolerance at iteration %d.5. Residual norm is %1.2e.",iter,resid))
+			else
+				println(@sprintf("bcgstb achieved desired tolerance at iteration %d. Residual norm is %1.2e.",iter,resvec[iter+1]))
+			end
 		end
 	end
 	if storeInterm

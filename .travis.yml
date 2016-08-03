@@ -6,19 +6,15 @@ os:
 
 julia:
   - 0.4
-  - release
+  - 0.5
   - nightly
   
 notifications:
   email: false
  
-before_install:
-   - julia -e 'Pkg.add("MatrixDepot"); Pkg.add("MatrixDepot")'
-   - julia -e 'Pkg.clone("https://github.com/lruthotto/LinearOperators.jl"); Pkg.build("LinearOperators")'
-   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-
-script:
-  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("KrylovMethods"); Pkg.test("KrylovMethods"; coverage=true)'
+#script: # use the default script setting, which is equivalent to the following
+#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("KrylovMethods"); Pkg.test("KrylovMethods"; coverage=true)'
 
 after_success:
   - julia -e 'cd(Pkg.dir("KrylovMethods")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'

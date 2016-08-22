@@ -38,7 +38,7 @@ x3  = lsqr(Af,rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)
 
 # test with dense hilbert matrix
 A   = matrixdepot("hilb",3,3)
-rhs = randn(size(A,1))
+rhs = [1;0;0.]
 xgt = A\rhs
 
 x1  = lsqr(LinearOperator(A),rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)

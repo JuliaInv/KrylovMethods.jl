@@ -16,7 +16,7 @@ Simple and fast Julia implementation of Krylov subspace methods for linear syste
 
 The main goal of this package is to derive simple and fast implementation of the most useful Krylov subspace methods. 
 
-Further goals are
+Our main objectives are:
 - **speed**: where try to minimize allocation costs and maximize the use of BLAS routines,
 - **memory efficiency**: storing temporary variables and re-allocations are avoided,
 - **generality**: where possible complex systems are supported,

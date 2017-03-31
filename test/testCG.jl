@@ -34,8 +34,8 @@ L = tril(A)
 D = diag(A)
 U = triu(A)
 n = size(A,1)
-JAC(x) = D.\x
-SGS(x) = L\(D.*(U\x))
+JAC = (x) -> D.\x
+SGS = (x) -> L\(D.*(U\x))
 
 rhs = randn(size(A,1))
 tolCG = 1e-5

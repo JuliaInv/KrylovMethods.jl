@@ -6,8 +6,8 @@ nrhs = 4;
 n = 100
 A  = sprandn(n,n,.1) + 10*speye(n)
 D  = diag(A)
-Af(x) = A*x 
-M(x)  = D.\x
+Af = x ->  A*x 
+M  = x ->  D.\x
 rhs = randn(n,nrhs)
 
 # test flag for early stopping
@@ -38,8 +38,8 @@ x5 = blockBiCGSTB(Af,rhs,tol=1e-6,maxIter=100,M1=M)
 println("Testing BlockBiCGSTAB for complex matrix")
 A  = sprandn(n,n,.1) + 10*speye(n) + im*(sprandn(n,n,.1) + 10*speye(n) )
 D  = diag(A)
-Af(x) = A*x 
-M(x)  = D.\x
+Af = x -> A*x 
+M  = x -> D.\x
 rhs = randn(n,nrhs) + 1im * randn(n,nrhs)
 
 x1 = blockBiCGSTB(A,rhs,tol=1e-6)

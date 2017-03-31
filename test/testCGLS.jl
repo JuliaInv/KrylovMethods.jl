@@ -7,7 +7,7 @@ println("=== Testing CLGS ===")
 
 # test with sparse matrix
 A   = sprandn(100,10,.2)
-Af(x,flag) = (flag=='F') ? A*x : A'*x
+Af = (x,flag) -> ((flag=='F') ? A*x : A'*x)
 rhs = randn(100)
 
 # test early stopping behaviour

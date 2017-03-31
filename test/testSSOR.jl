@@ -25,7 +25,7 @@ println("=== Testing SSOR as Preconditioner ===")
 omega = 1.2;
 d = omega./diag(A);
 x = zeros(length(rhs)) # pre allocation for the preconditioner result.
-PC(r) = (x[:]=0.0; return ssorPrecTrans!(A,x,r,d));
+PC = r -> (x[:]=0.0; return ssorPrecTrans!(A,x,r,d));
 y = KrylovMethods.cg(A,rhs,tol=1e-12,maxIter=200,M=PC,out=1)[1]
 @test norm(A*y-rhs)/norm(rhs) <= 1e-12
 

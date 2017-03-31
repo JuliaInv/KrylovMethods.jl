@@ -35,7 +35,7 @@ Output:
   iter    - number of iterations
   resvec  - error at each iteration
 """
-function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Vector=[],out::Int=0,storeInterm::Bool=false)
+function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Vector=[],out::Int=0,storeInterm::Bool=false, tolRho::Real=1e-40)
 
 	n   = length(b)
 	if norm(b)==0; return zeros(eltype(b),n),-9; end
@@ -76,7 +76,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 	end
 	for iter = 1:maxIter
 		rho   = dot(r_tld,r)
-		if ( abs(rho) < 1e-16 ); flag = -2; break; end
+		if ( abs(rho) < tolRho ); flag = -2; break; end
 		
 		if ( iter > 1 )
 			beta  = ( rho/rho1 )*( alpha/omega )
@@ -130,7 +130,7 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 			println(@sprintf("bicgstb iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",
 																								maxIter,resvec[iter],tol))
 		elseif flag==-2
-			println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter+1]));
+			println(@sprintf("bicgstb: rho equal to zero at iteration %d. Returned residual has norm %1.2e.", iter,resvec[iter]));
 		elseif flag==-4
 			println(@sprintf("bicgstb : omega < 1e-16"))
 		elseif out>=1

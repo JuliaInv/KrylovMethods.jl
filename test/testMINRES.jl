@@ -7,7 +7,7 @@ println("=== Testing MINRES ===")
 
 A = sprandn(10,10,0.1)
 A = A'*A + 4*speye(10)
-Af(v) = A*v
+Af = (v) -> A*v
 rhs = randn(10)
 rhst = copy(rhs)
 # test stop by maxIter
@@ -40,10 +40,7 @@ x,f, = minres(A,rhs,maxIter=20,rtol=1e-20,gtol=1e-20,btol=1e-10,condlim=1e20)
 println("test if anything is done for zero right hand side")
 A = randn(20,4)
 mv = 0
-function Af(x)
-	mv+=1
-	return Af*x
-end
+Af = (x) -> ( mv+=1; return Af*x)
 rhs = zeros(20)
 x, = minres(Af,rhs,maxIter=20,rtol=1e-20,gtol=1e-20,btol=1e-10,condlim=1e20)
 @test all(x.==0)

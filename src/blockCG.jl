@@ -1,6 +1,6 @@
 export blockCG
 
-function blockCG{T1,T2}(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...) 
+function blockCG{T1,T2}(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...)
 	X = zeros(promote_type(T1,T2),size(A,2),size(B,2)) # pre-allocate
 	return blockCG(V -> At_mul_B!(1.0,A,V,0.0,X),B;kwargs...) # multiply with transpose of A for efficiency
 end
@@ -38,16 +38,16 @@ Output:
   resvec  - norm of relative residual at each iteration
 
 
-Reference: 
+Reference:
 
-	O'Leary, D. P. (1980). The block conjugate gradient algorithm and related methods. 
+	O'Leary, D. P. (1980). The block conjugate gradient algorithm and related methods.
 	Linear Algebra and Its Applications, 29, 293–322. http://doi.org/10.1016/0024-3795(80)90247-5
 
 """
 function blockCG{T<:AbstractFloat}(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
-	
+
 R = copy(B)
 Z = M(R)
 if ortho
@@ -55,10 +55,10 @@ if ortho
 else
 	P = copy(Z); #P must be different memory than Z and R.
 end
- 
+
 n, nrhs = size(X)
 nB      = computeNorm(B)
-resmat  = zeros(maxIter,nrhs) 
+resmat  = zeros(maxIter,nrhs)
 
 if storeInterm
     Xout = zeros(n,nrhs,maxIter)	# allocate space for intermediates
@@ -85,7 +85,7 @@ for iter=1:maxIter
     BLAS.gemm!('T','N',1.0,P,R,0.0,PTR)
 	pinvPTQ = getPinv!(PTQ,pinvTol)
     Alpha = pinvPTQ*PTR
-    
+
     # X     += P*Alpha
     BLAS.gemm!( 'N','N',1.0, P, Alpha, 1.0, X)
 	if storeInterm; Xout[:,:,iter] = X; end
@@ -100,18 +100,18 @@ for iter=1:maxIter
 	    flag = 0;
         break;
     end
-    
+
     Z     = M(R)
     #Beta  = -(PTQ)\(Q'*Z);
 	BLAS.gemm!('T','N',1.0,Q,Z,0.0,QTZ)
     Beta  = -pinvPTQ*QTZ
-    
+
 	# Z might be just R here - don't overwite it! Q is not needed.
 	Q[:] = Z;
 	BLAS.gemm!('N','N',1.0,P,Beta,1.0,Q);
 	P[:] = Q;
-		
-    if ortho     
+
+    if ortho
         P,     =  mgs!(P)
  	end
 end
@@ -146,6 +146,5 @@ function getPinv!(A,pinvTol)
     index       = SVD.S .> pinvTol*maximum(SVD.S)
     Sinv[index] = 1.0./ SVD.S[index]
     Sinv[find(!isfinite(Sinv))] = 0.0
-    return SVD.Vt'scale(Sinv, SVD.U')
+    return SVD.Vt'*Diagonal(Sinv)*SVD.U'
 end
- 

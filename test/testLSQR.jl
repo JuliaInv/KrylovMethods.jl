@@ -24,7 +24,7 @@ x3 = lsqr(A,r3,out=2)
 A   = sprandn(100,10,.2)
 rhs = randn(100)
 xgt = full(A)\rhs
-Af(flag,x,a=0.0,v=0.0) = (flag=='F') ? A*x +a*v : A'*x+a*v
+Af = (flag,x,a=0.0,v=0.0) -> ((flag=='F') ? A*x +a*v : A'*x+a*v)
 
 x1  = lsqr(LinearOperator(A),rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10,out=1)
 x2  = lsqr(A,rhs,atol=1e-10,btol=1e-10,condlim=1e5,maxIter=10)

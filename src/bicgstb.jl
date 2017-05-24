@@ -38,7 +38,7 @@ Output:
 function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x->copy(x), M2=x->copy(x),x::Vector=[],out::Int=0,storeInterm::Bool=false, tolRho::Real=1e-40)
 
 	n   = length(b)
-	if norm(b)==0; return zeros(eltype(b),n),-9; end
+	if norm(b)==0; return zeros(eltype(b),n),-9,0,0,zeros(1); end
 	M1f =  isa(M1,Function) ? M1 : x -> M1\x
 	M2f =  isa(M2,Function) ? M2 : x -> M2\x
 	

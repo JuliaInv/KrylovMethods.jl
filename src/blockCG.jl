@@ -24,7 +24,7 @@ Input:
 	X           - array of starting guesses (will be overwritten)
 	out         - flag for output (-1: no output, 0: only errors, 1: final status, 2: residual norm at each iteration)
 	ortho       - flag for re-orthogonalization (default: false)
-	pinvTol     - tolerance for pseudoinverse (default: eps(T)*size(B,1))
+	pinvTol     - tolerance for pseudoinverse (default: eps(T)\*size(B,1))
 	storeInterm - flag for storing iterates (default: false)
 
 Output:
@@ -137,7 +137,7 @@ function computeNorm(R)
 			res[k]+=R[i,k]*R[i,k]
 		end
 	end
-	return sqrt(res)
+	return sqrt.(res)
 end
 
 function getPinv!(A,pinvTol)
@@ -145,6 +145,6 @@ function getPinv!(A,pinvTol)
 	Sinv        = zeros(length(SVD.S))
     index       = SVD.S .> pinvTol*maximum(SVD.S)
     Sinv[index] = 1.0./ SVD.S[index]
-    Sinv[find(!isfinite(Sinv))] = 0.0
+    Sinv[find(.!isfinite.(Sinv))] = 0.0
     return SVD.Vt'*(Diagonal(Sinv)*SVD.U')
 end

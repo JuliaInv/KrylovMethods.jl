@@ -1,9 +1,4 @@
-using LinearOperators
-using MatrixDepot
-using KrylovMethods
-using Base.Test
-
-println("=== Testing CLGS ===")
+@testset "CLGS" begin
 
 # test with sparse matrix
 A   = sprandn(100,10,.2)
@@ -41,4 +36,4 @@ x2  = cgls(A,rhs,tol=1e-10,maxIter=10)
 @test norm(xgt-x2[1])/norm(xgt) < 1e-6
 @test norm(x1[1]-x2[1])/norm(x1[1]) < 1e-12
 
-println("=== CGLS: All tests passed. ===")
+end

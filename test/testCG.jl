@@ -1,10 +1,5 @@
-using KrylovMethods
-using Base.Test
-using LinearOperators
-include("getDivGrad.jl")
 
-
-println("=== Testing CG ===")
+@testset "CG" begin
 # small full system
 A = [4.0 1; 1 4]
 rhs = [2.0;2]
@@ -66,4 +61,4 @@ xSGSr,flagSGSr,relresSGSr,iterSGSr,resvecSGSr  = cg(A,rhs,tol=tolCG,maxIter=100,
 @test iterJAC==iterCG
 @test iterSGS<=iterJAC
 
-println("=== CG : All tests passed. ====")
+end

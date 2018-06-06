@@ -1,9 +1,4 @@
-using Base.Test
-using KrylovMethods
-using LinearOperators
-using MatrixDepot
-
-println("=== Testing MINRES ===")
+@testset "MINRES" begin
 
 A = sprandn(10,10,0.1)
 A = A'*A + 4*speye(10)
@@ -23,7 +18,6 @@ x2,f2, = minres(Af,rhs,x=x0[:,1],maxIter=10,rtol=1e-12,gtol=1e-12,btol=1e-20,out
 @test (norm(A*x1-rhs)/norm(rhs)) < 1e-11
 @test (norm(A*x2-rhs)/norm(rhs)) < 1e-11
 @test norm(x1-x2)/norm(x1) < 1e-12
-
 println("test stop by condlim")
 A = matrixdepot("fiedler",50)
 rhs = randn(50)
@@ -45,4 +39,4 @@ rhs = zeros(20)
 x, = minres(Af,rhs,maxIter=20,rtol=1e-20,gtol=1e-20,btol=1e-10,condlim=1e20)
 @test all(x.==0)
 @test mv==0
-println("=== MINRES : All tests passed. ====")
+end

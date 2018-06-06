@@ -1,8 +1,4 @@
-using KrylovMethods
-using MatrixDepot
-using Base.Test
-
-println("Tests for symmetric and positive definite A")
+@testset "MatrixDepot" begin
 debit = [ ("hilb", 5),  ("cauchy",4), ("invhilb",4), ("moler",7),("pascal",6),("pei",100),("tridiag",100),("lehmer",100),("poisson",12),("wathen",10)] 
 
 for k=1:length(debit)
@@ -20,3 +16,4 @@ for k=1:length(debit)
 	@printf "cg is OK\n"
 end
 	
+end

@@ -146,5 +146,5 @@ function getPinv!(A,pinvTol)
     index       = SVD.S .> pinvTol*maximum(SVD.S)
     Sinv[index] = 1.0./ SVD.S[index]
     Sinv[find(.!isfinite.(Sinv))] = 0.0
-    return SVD.Vt'*(Diagonal(Sinv)*SVD.U')
+    return SVD.Vt'*Diagonal(Sinv)*SVD.U'
 end

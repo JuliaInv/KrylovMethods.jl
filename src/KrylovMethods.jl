@@ -1,3 +1,5 @@
+__precompile__()
+
 module KrylovMethods
 
 	import Base.BLAS

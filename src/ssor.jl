@@ -25,7 +25,7 @@ Output:
 	iter    - number of iterations
 	resvec  - error at each iteration
 """
-function ssor(A::SparseMatrixCSC,b::Vector;x::Vector=[],tol::Real=1e-2,maxIter::Int=1,omega::Real=1.0,out::Int=0,storeInterm::Bool=false;)
+function ssor(A::SparseMatrixCSC,b::Vector;x::Vector=[],tol::Real=1e-2,maxIter::Int=1,omega::Real=1.0,out::Int=0,storeInterm::Bool=false)
 n      = length(b)
 OmInvD = omega./diag(A)
 

@@ -5,12 +5,12 @@ os:
   - linux
 
 julia:
-  - 0.5
+  - 0.6
   - nightly
-  
+
 notifications:
   email: false
- 
+
 #script: # use the default script setting, which is equivalent to the following
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("KrylovMethods"); Pkg.test("KrylovMethods"; coverage=true)'

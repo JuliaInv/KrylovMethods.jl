@@ -5,8 +5,7 @@ os:
   - linux
 
 julia:
-  - 0.5
-  - nightly
+  - 0.7
   
 notifications:
   email: false

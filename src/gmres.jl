@@ -2,7 +2,7 @@ export gmres
 
 function gmres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,1))
-	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
+	return gmres(x -> mul!(Ax,A,x,1.0,0.0),b,restrt;kwargs...)
 end
 
 gmres(A,b::Vector,restrt;kwargs...) = gmres(x -> A*x ,b,restrt;kwargs...)

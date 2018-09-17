@@ -16,9 +16,9 @@ using LinearAlgebra
 	#include("ssor.jl")	
 	#include("lsqr.jl")	
 	#include("lanczosTridiag.jl")
-	#include("lanczos.jl")
+	include("lanczos.jl")
 	#include("minres.jl")
-	#include("gs.jl")
+	include("gs.jl")
 	
 	greet() = print("Hello World!")
 end # module

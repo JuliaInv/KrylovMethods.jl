@@ -42,7 +42,7 @@ Output:
   iter    - number of iterations
   resvec  - error at each iteration
 """
-function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0) where T <: AbstractFloat
+function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0) where T 
 
 	n   = size(b,1);
 	m   = size(b,2);
@@ -71,7 +71,7 @@ function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100
 	end
 	v 	= zeros(T,n,m);
     p   = copy(r);   
-	
+
 	resvec = zeros(maxIter+1)
 	bnrm2 = norm( b )
 	
@@ -93,6 +93,7 @@ function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100
 	t = [];
 	iter = 0;
 	while iter < maxIter
+		
 		iter+=1;
 		rho = BLAS.gemm('C','N', constOne, r_tld, r); 				# equivalent to rho   = r_tld'*r;
 		

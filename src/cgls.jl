@@ -5,9 +5,12 @@ function cgls(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2
     x1 = zeros(T,size(A,1))
     x2 = zeros(T,size(A,2))
     
-    Af(x,flag) = (flag=='F') ? A_mul_B!(1.0,A,x,0.0,x1) : At_mul_B!(1.0,A,x,0.0,x2)
+    Af(x,flag) = (flag=='F') ? mul!(x1,A,x,1.0,0.0) : mul!(x2,transpose(A),x,1.0,0.0)
     return cgls(Af,b;kwargs...)
 end
+
+#A_mul_B!(1.0,A,x,0.0,Ax) -> mul!(Ax,A,x,1.0,0.0)
+
 
 cgls(A,b::Vector;kwargs...) = cgls((x,flag) -> ((flag=='F') ? A*x : A'*x),b::Vector;kwargs...)
 

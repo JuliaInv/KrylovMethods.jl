@@ -2,9 +2,12 @@ export cg
 
 
 function cg(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2}
-	x = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
-	return cg(v -> At_mul_B!(1.0,A,v,0.0,x),b;kwargs...) # multiply with transpose of A for efficiency
+	Av = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
+	return cg(v -> mul!(Av,A,v,1.0,0.0),b;kwargs...) # multiply with transpose of A for efficiency
 end
+
+#A_mul_B!(1.0,A,x,0.0,Ax) -> mul!(Ax,A,x,1.0,0.0)
+
 
 cg(A,b::Vector;kwargs...) = cg(x -> A*x,b;kwargs...)
 

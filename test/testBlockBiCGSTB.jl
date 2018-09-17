@@ -41,18 +41,13 @@
 		A  = sprandn(n,n,.1) + sparse(10.0I,100,100) + im*(sprandn(n,n,.1) + sparse(10.0I,100,100) )
 		D  = Vector(diag(A))
 		Af = x -> A*x 
-		M  = x -> D.\x
+		M  = x -> x./D
 
 		rhs = randn(n,nrhs) + 1im * randn(n,nrhs)
-		println("IM HERE")
 		x1 = blockBiCGSTB(A,rhs,tol=1e-6)
-				println("IM HERE")
 		x2 = blockBiCGSTB(Af,rhs,tol=1e-6)
-				println("IM HERE")
 		x3 = blockBiCGSTB(Af,rhs,tol=1e-6,maxIter=200,x=randn(size(rhs))+im*randn(size(rhs)))
-				println("IM HERE")
 		x4 = blockBiCGSTB(Af,rhs,tol=1e-6,maxIter=200,M1=M)
-				println("IM HERE")
 		
 		@test norm(A*x1[1]-rhs)/norm(rhs) < 1e-6
 		@test norm(A*x2[1]-rhs)/norm(rhs) < 1e-6

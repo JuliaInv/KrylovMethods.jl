@@ -1,8 +1,10 @@
 export fgmres
 import Base.isempty
+using LinearAlgebra
+
 function fgmres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,1))
-	return fgmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
+	return fgmres(x -> mul!(Ax,A,x,1.0,0.0),b,restrt;kwargs...)
 end
 
 fgmres(A,b::Vector,restrt;kwargs...) = fgmres(x -> A*x ,b,restrt;kwargs...)
@@ -76,7 +78,12 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
   TYPE = eltype(b)
   mem = checkMemorySize(mem,n,restrt,TYPE,flexible);
 
-  if norm(b)==0; return zeros(eltype(b),n),-9,0.0,0,[0.0]; end
+  if norm(b)==0.0 
+	return zeros(eltype(b),n),-9,0.0,0,[0.0]; 
+  end
+  
+   
+	
   if Base.isempty(x)
     x = zeros(eltype(b),n)
 	r = copy(b);
@@ -85,8 +92,13 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
   else
 	r = b-A(x);
   end
+  
+  if eltype(b) <: Complex 
+       x = complex(x)
+   end
+  
   if storeInterm
-    X = zeros(n,maxIter)	# allocate space for intermediates
+    X = zeros(eltype(b),n,maxIter)	# allocate space for intermediates
   end
 
   betta = norm(r);
@@ -114,74 +126,74 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
 
   
   flag = -1
-
+	
 	counter = 0
 	w = zeros(TYPE,0);
 	iter = 0
 	while iter < maxIter
+		
 		iter+=1;
 		xi[1] = betta;
 		BLAS.scal!(n,(1/betta)*constOne,r,1); # w = w./betta
-		H[:] = 0.0;
-		t[:] = 0.0;
+		H[:] .= 0.0;
+		t[:] .= 0.0;
 		
 		if out==2;; print(@sprintf("%3d\t", iter));end
-
+		
 		for j = 1:restrt
-				if j==1
-					V[:,j] = r;  # no memory problem with this line....
-					z = M(r)
-				else
-					V[:,j] = w;  # no memory problem with this line....
-					z = M(w)
-				end
-				if flexible
-					Z[:,j] = z;
-				end
-
-				w = A(z); # w = A'*z;
-
-				counter += 1;
+			
+			if j==1
+				V[:,j] = r;  # no memory problem with this line....
+				z = M(r)
+			else
+				V[:,j] = w;  # no memory problem with this line....
+				z = M(w)
+			end
+			if flexible
+				Z[:,j] = z;
+			end
+			w = A(z); # w = A'*z;
+			
+			counter += 1;
 				
-				# ## modified Gram Schmidt:
-				# for i=1:j
-					# H[i,j] = dot(vec(V[:,i]),w);
-					# w = w - H[i,j]*vec(V[:,i]);
-				# end
+			# ## modified Gram Schmidt:
+			# for i=1:j
+				# H[i,j] = dot(vec(V[:,i]),w);
+				# w = w - H[i,j]*vec(V[:,i]);
+			# end
 	
 		
-				# Gram Schmidt (much faster than MGS even though zeros are multiplied, does relatively well):
-				BLAS.gemv!('C', constOne, V, w,constZero,t);# t = V'*w;
-				t[j+1:end] = 0.0;
-				H[1:restrt,j] = t;
-				BLAS.gemv!('N', -constOne, V, t,constOne,w);# w = w - V*t;
+			# Gram Schmidt (much faster than MGS even though zeros are multiplied, does relatively well):
+			BLAS.gemv!('C', constOne, V, w,constZero,t);# t = V'*w;
+			t[j+1:end] .= 0.0;
+			H[1:restrt,j] = t;
+			BLAS.gemv!('N', -constOne, V, t,constOne,w);# w = w - V*t;
 				
 				
-				betta = norm(w);
-				H[j+1,j] = betta;
+			betta = norm(w);
+			H[j+1,j] = betta;
 
-				BLAS.scal!(n,(1/betta)*constOne,w,1); # w = w*(1/betta);
+			BLAS.scal!(n,(1/betta)*constOne,w,1); # w = w*(1/betta);
 
-				# the following 2 lines are equivalent to the 2 next
-				# y = H[1:j+1,1:j]\xi[1:j+1];
-				# err = norm(H[1:j+1,1:j]*y - xi[1:j+1])/rnorm0
-				Q = qr(H[1:j+1,1:j],thin=false)[1];
-				err = abs(Q[1,end]*xi[1])/rnorm0
+			# the following 2 lines are equivalent to the 2 next
+			# y = H[1:j+1,1:j]\xi[1:j+1];
+			# err = norm(H[1:j+1,1:j]*y - xi[1:j+1])/rnorm0
+			Q = qr(H[1:j+1,1:j]).Q;
+			err = abs(Q[1,end]*xi[1])/rnorm0
 
-				if out==2 print(@sprintf("%1.1e ", err)); end
-				resvec[counter] = err;
-
-				if err <= tol
-					if flexible
-						Z[:,j+1:end] = 0.0;
-					else
-						V[:,j+1:end] = 0.0;
-					end
-					if out==2; print("\n"); end
-					flag = 0; break
+			if out==2 print(@sprintf("%1.1e ", err)); end
+			resvec[counter] = err;
+			if err <= tol
+				if flexible
+					Z[:,j+1:end] .= 0.0;
+				else
+					V[:,j+1:end] .= 0.0;
 				end
+				if out==2; print("\n"); end
+				flag = 0; break
+			end
 		end # end for j to restrt
-
+		
 		y = pinv(H)*xi;
 
 		if flexible
@@ -191,7 +203,9 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
 			z = M(w);
 			w[:] = z;
 		end
+		
 		x .+= w;
+
 		if storeInterm; X[:,iter] = x; end
 		
 		if out==2; print("\n"); end
@@ -204,9 +218,7 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
 			betta = norm(r)
 		end
 		# if out==2; print(@sprintf("\t %1.1e\n", err)); end
-		
 	end #for iter to maxiter
-
 	if out>=0
 		if flag==-1
 			println(@sprintf("fgmres iterated maxIter (=%d) outer iterations without achieving the desired tolerance. Acheived: %1.2e",maxIter,err))
@@ -214,6 +226,7 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
 			println(@sprintf("fgmres achieved desired tolerance at inner iteration %d. Residual norm is %1.2e.",counter,resvec[counter]))
 		end
 	end
+	
 	if storeInterm
 		return X[:,1:iter],flag,resvec[counter],iter,resvec[1:counter]
 	else

@@ -1,13 +1,13 @@
 export fgmres
 import Base.isempty
-function fgmres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...)
+function fgmres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,1))
 	return fgmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
 end
 
 fgmres(A,b::Vector,restrt;kwargs...) = fgmres(x -> A*x ,b,restrt;kwargs...)
 
-type FGMRESmem
+mutable struct FGMRESmem
 	V    			::Array
 	Z				::Array
 end
@@ -112,12 +112,14 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
     println(@sprintf("=== fgmres ===\n%4s\t%7s\n","iter","relres"))
   end
 
-  iter = 0
+  
   flag = -1
 
 	counter = 0
 	w = zeros(TYPE,0);
-	for iter = 1:maxIter
+	iter = 0
+	while iter < maxIter
+		iter+=1;
 		xi[1] = betta;
 		BLAS.scal!(n,(1/betta)*constOne,r,1); # w = w./betta
 		H[:] = 0.0;
@@ -202,6 +204,7 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
 			betta = norm(r)
 		end
 		# if out==2; print(@sprintf("\t %1.1e\n", err)); end
+		
 	end #for iter to maxiter
 
 	if out>=0

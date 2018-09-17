@@ -1,6 +1,6 @@
 export gmres
 
-function gmres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) 
+function gmres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,1))
 	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
 end
@@ -81,7 +81,8 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
     iter = 0
     flag = -1
     cnt  = 1
-    for iter = 1:maxIter
+    while iter < maxIter
+		iter +=1;
         V[:,1] = r / norm( r )
         s      = norm( r )*e1;  
         
@@ -139,6 +140,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
         resvec[cnt] = abs(s[restrt+1]) / bnrm2
         
         if out==2; print(@sprintf("\t %1.1e\n", err)); end
+		
     end
     
     if out>=0

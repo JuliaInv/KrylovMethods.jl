@@ -1,14 +1,13 @@
 
 export blockBiCGSTB
 
-function blockBiCGSTB{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) 
+function blockBiCGSTB(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) where {T1,T2}
 	TYPE = promote_type(T1,T2);
 	Ax = zeros(TYPE,size(b));                
-	return blockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...); 
+	return blockBiCGSTB(x -> mul!(Ax,A,x,one(TYPE),zero(TYPE)),b;kwargs...); 
 end
-
+#A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax) -> mul!(Ax,A,x,one(TYPE),zero(TYPE))
 blockBiCGSTB(A,b; kwargs...) =  blockBiCGSTB(x -> A*x,b; kwargs...)
-
 
 """
 x,flag,err,iter,resvec = blockBiCGSTB(A,b,tol=1e-6,maxIter=100,M1=identity,M2=identity,x=[],out=0)
@@ -39,20 +38,18 @@ Output:
   						-3 : norm(s)/bnrm2 < tol 
   						-4 : omega < 1e-16
   						-9 : right hand side was zero)
-  err     - error, i.e., vecnorm(A*x-b)/vecnorm(b)
+  err     - error, i.e., norm(A*x-b)/norm(b)
   iter    - number of iterations
   resvec  - error at each iteration
 """
-
-
-function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0)
+function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0) where T <: AbstractFloat
 
 	n   = size(b,1);
 	m   = size(b,2);
 	
 	N = m*n;
 	
-	if vecnorm(b)==0; 
+	if norm(b)==0; 
 		return zeros(eltype(b),n,m),-9; 
 	end
 	M1f =  isa(M1,Function) ? M1 : x -> M1\x
@@ -65,7 +62,7 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 		x = zeros(eltype(b),n,m)
 		r = copy(b)
 		r_tld = b; # We are not changing r_tld in this function, so we assign it to point to b that is also held constant.
-	elseif vecnorm(x)==0.0
+	elseif norm(x)==0.0
 		r = copy(b)
 		r_tld = b; # We are not changing r_tld in this function, so we assign it to point to b that is also held constant.
 	else
@@ -76,15 +73,15 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
     p   = copy(r);   
 	
 	resvec = zeros(maxIter+1)
-	bnrm2 = vecnorm( b )
+	bnrm2 = norm( b )
 	
-	resid   = vecnorm( r ) / bnrm2; 
+	resid   = norm( r ) / bnrm2; 
 	resvec[1] = resid
 	
 	alpha = 1.0
 	omega = 1.0
 	
-	iter = 1
+	
 	flag = -1
 	rho1 = 0.0
 	
@@ -94,10 +91,12 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 	end
 	RtV = [];
 	t = [];
-	for iter = 1:maxIter
+	iter = 0;
+	while iter < maxIter
+		iter+=1;
 		rho = BLAS.gemm('C','N', constOne, r_tld, r); 				# equivalent to rho   = r_tld'*r;
 		
-		if ( vecnorm(rho) < 1e-13 ); flag = -2; break; end
+		if ( norm(rho) < 1e-13 ); flag = -2; break; end
 		
 		if ( iter > 1 )
 			RtT = BLAS.gemm('C','N', constOne, r_tld, t); # RtT  = r_tld'*t;
@@ -121,7 +120,7 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 		BLAS.gemm!('N','N', constOne, p_hat, alpha,constOne,x); 		# x = x + p_hat*alpha # After this line p_hat is done.
 		BLAS.gemm!('N','N', -constOne, v, alpha,constOne,r);  			# r = r - v*alpha;
 
-		resid = vecnorm( r ) / bnrm2
+		resid = norm( r ) / bnrm2
 		if ( resid < tol )
 			iter -=1	
 			flag  = -3; break 
@@ -132,12 +131,12 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 		
 		t     = A(s_hat)    # compute A*shat
 		
-		omega = vecdot(t,r) / vecdot(t,t) ;
+		omega = dot(t,r) / dot(t,t) ;
 		
 		BLAS.axpy!(N,omega,s_hat,1,x,1); 	# x = x + s_hat*omega
 		BLAS.axpy!(N,-omega,t,1,r,1); 		# r = r - omega * t
 		
-		resid = vecnorm( r ) / bnrm2
+		resid = norm( r ) / bnrm2
 		resvec[iter+1] = resid
 		if out==2
 			println(@sprintf("%3d\t%1.2e",iter,resvec[iter+1]))
@@ -146,7 +145,7 @@ function blockBiCGSTB{T}(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=
 			flag = 0; break
 		end
 		if norm(omega) < 1e-16; flag = -4; break; end
-		
+
 	end
 	if out>=0
 		if flag==-1

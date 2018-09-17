@@ -1,6 +1,6 @@
 export blockCG
 
-function blockCG{T1,T2}(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...)
+function blockCG(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...) where {T1,T2}
 	X = zeros(promote_type(T1,T2),size(A,2),size(B,2)) # pre-allocate
 	return blockCG(V -> At_mul_B!(1.0,A,V,0.0,X),B;kwargs...) # multiply with transpose of A for efficiency
 end
@@ -44,7 +44,7 @@ Reference:
 	Linear Algebra and Its Applications, 29, 293–322. http://doi.org/10.1016/0024-3795(80)90247-5
 
 """
-function blockCG{T<:AbstractFloat}(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)
+function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)  where T <: AbstractFloat
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 
@@ -76,7 +76,8 @@ QTZ = zeros(T,nrhs,nrhs)
 
 flag = -1;
 iter = 0
-for iter=1:maxIter
+while iter < maxIter
+	iter+=1;
 	Q = A(P)
     # PTQ   = P'*Q
 	BLAS.gemm!('T','N',1.0,P,Q,0.0,PTQ)
@@ -114,6 +115,7 @@ for iter=1:maxIter
     if ortho
         P,     =  mgs!(P)
  	end
+	
 end
 if out>=0
 	if flag==-1

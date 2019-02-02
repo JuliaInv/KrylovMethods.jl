@@ -26,7 +26,7 @@ Output:
 	R::Array  - m-by-n upper triangular matrix
 
 """
-function cgs!{T}(V::Array{T})
+function cgs!(V::Array{T}) where {T}
 
 	m,n    = size(V)
 	R      = zeros(T,n,n)
@@ -67,7 +67,7 @@ Output:
 	R::Array  - m-by-n upper triangular matrix
 
 """
-function mgs!{T}(V::Array{T})
+function mgs!(V::Array{T}) where {T}
 	m,n    = size(V)
 	R      = zeros(T,n,n)
 	for k=1:n

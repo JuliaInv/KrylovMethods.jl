@@ -27,7 +27,7 @@ Output:
 """
 function ssor(A::SparseMatrixCSC,b::Vector;x::Vector=[],tol::Real=1e-2,maxIter::Int=1,omega::Real=1.0,out::Int=0,storeInterm::Bool=false)
 n      = length(b)
-OmInvD = omega./diag(A)
+OmInvD = Array(omega./diag(A))
 
 if storeInterm
     X = zeros(n,maxIter)	# allocate space for intermediates
@@ -46,9 +46,9 @@ if out==2
 end
 
 resvec = zeros(maxIter)
-iter   = 0
 flag   = -1
-for iter = 1:maxIter
+iter   = 1
+while iter <= maxIter
 	ssorPrec!(A,x,r,OmInvD)
 	if storeInterm; X[:,iter] = x; end
 	resvec[iter] = norm(r)/rnorm0
@@ -56,7 +56,9 @@ for iter = 1:maxIter
 	if resvec[iter] < tol
 		flag=0; break
 	end
+	iter += 1
 end
+iter = min(iter,maxIter)
 
 if (flag==-1) && (out>=0)
 	println(@sprintf("ssor iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",maxIter,resvec[iter],tol))
@@ -90,7 +92,7 @@ end
  see also sor, which uses ssorPrec! in each iteration.
  WARNING: DO NOT USE AS PRECONDITIONER, SINCE THIS METHOD OVEWRITES THE VECTOR r
 """
-function ssorPrec!(A::SparseMatrixCSC,x::Vector,r::Vector,OmInvD::Vector=1./diag(A))
+function ssorPrec!(A::SparseMatrixCSC,x::Vector,r::Vector,OmInvD::Vector=Array(1 ./diag(A)))
 
 dx = 0.0
 n  = length(x)
@@ -115,7 +117,7 @@ return x
 end
 
 """
-x = ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1./diag(A))
+x = ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1 ./diag(A))
 
 Applies SSOR steps to the linear systems A*X = B, for symmetric A. For efficiency, it works on the
 transpose of the matrix A.       
@@ -138,7 +140,7 @@ Example for solving A*X=B, when A is Sparse Symmtric Positive definite:
     PC(r) = (x[:]=0.0; return ssorPrecTrans!(A,x,r,d));
     y = KrylovMethods.cg(A,b,tol=1e-12,maxIter=200,M=PC,out=1)[1]
 """
-function ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1./diag(A))
+function ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=Array(1 ./diag(A)))
 
 r    = 0.0
 n    = size(X,1)

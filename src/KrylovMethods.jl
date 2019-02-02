@@ -1,6 +1,10 @@
 module KrylovMethods
+
+	using LinearAlgebra
+	using SparseArrays
+	using Printf
 	
-	import Base.BLAS
+	import LinearAlgebra.BLAS
 	
 	include("cg.jl")
 	include("blockCG.jl")

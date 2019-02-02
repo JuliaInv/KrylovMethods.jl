@@ -14,13 +14,13 @@
 	end
 	@testset "bidiag" begin
 		println("=== Testing Lanczos Bidiagonalization ===")
-		A = sprandn(10,10,.4) + speye(10)
+		A = sprandn(10,10,.4) + I
 		p = randn(10)
 		k = 9
 		
 		U,B,V = lanczosBidiag(A,p,k)
 		
-		@test norm(full(U'*A*V-B))/norm(full(A)) < 1e-15
+		@test norm(Matrix(U'*A*V-B))/norm(Matrix(A)) < 1e-15
 	end
 
 
@@ -36,14 +36,14 @@
 		Aff  = x -> A*x
 		T1,V1 = lanczosTridiag(A,ones(size(A,1)),size(A,1),tol=1e-10,doReorth=true)
 		T2,V2 = lanczosTridiag(Aff,ones(size(A,1)),size(A,1),tol=1e-10,doReorth=false)
-		sT1  = svd(full(T1))[2]
-		sT2  = svd(full(T2))[2]
-		sA   = svd(full(A))[2]
+		sT1  = svd(Matrix(T1)).S
+		sT2  = svd(Matrix(T2)).S
+		sA   = svd(Matrix(A)).S
 		
 		@test abs(sT1[1]-sA[1])/sA[1] < 1e-4
 		@test abs(sT2[1]-sA[1])/sA[1] < 1e-4
 		B = V1'*V1
-		@test norm(B - diagm(diag(B))) < 1e-10
+		@test norm(B - Diagonal(diag(B))) < 1e-10
 		@test norm(diag(B)- ones(size(B,1))) < 1e-10
 	end
 end

@@ -15,7 +15,7 @@ tt = cgls(Af,zeros(size(A,1)),tol=1e-20,maxIter=2,out=2)
 @test all(tt[1].==0)
 
 
-xgt = full(A)\rhs
+xgt = Matrix(A)\rhs
 xt  = cgls(LinearOperator(A),rhs,tol=1e-20)
 xt2 = cgls(Af,rhs,tol=1e-20,maxIter=100,x=randn(size(xt[1])))
 Xt  = cgls(A,rhs,tol=1e-20,maxIter=100,storeInterm=true,out=1)

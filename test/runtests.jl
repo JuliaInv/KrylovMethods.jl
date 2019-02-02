@@ -1,7 +1,10 @@
 using KrylovMethods
-using Base.Test
+using Test
 using MatrixDepot
 using LinearOperators
+using SparseArrays
+using LinearAlgebra
+using Printf
 
 include("getDivGrad.jl")
 

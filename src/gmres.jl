@@ -1,8 +1,11 @@
 export gmres
 
-function gmres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) 
+function gmres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,1))
-	return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
+    Af(flag,x,a=0.0,v=ATv) = (flag=='F') ? mul!(v,A,x,1.0,a) : mul!(v,transpose(A),x,1.0,a)
+	
+	# return gmres(x -> A_mul_B!(1.0,A,x,0.0,Ax),b,restrt;kwargs...)
+	return gmres(x -> mul!(Ax,A,x,1.0,0.0),b,restrt;kwargs...)
 end
 
 gmres(A,b::Vector,restrt;kwargs...) = gmres(x -> A*x ,b,restrt;kwargs...)
@@ -78,10 +81,10 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
     	println(@sprintf("=== gmres ===\n%4s\t%7s\n","iter","relres"))
     end
     
-    iter = 0
     flag = -1
     cnt  = 1
-    for iter = 1:maxIter
+	iter = 1
+    while iter <= maxIter
         V[:,1] = r / norm( r )
         s      = norm( r )*e1;  
         
@@ -122,7 +125,7 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
                 if out==2; print("\n"); end
                 flag = 0; break
             end
-            cnt = cnt+1
+            cnt  += 1
         end
         if  err <= tol
             flag = 0
@@ -139,7 +142,9 @@ function gmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=10
         resvec[cnt] = abs(s[restrt+1]) / bnrm2
         
         if out==2; print(@sprintf("\t %1.1e\n", err)); end
+		iter += 1
     end
+	iter = min(iter,maxIter)
     
     if out>=0
         if flag==-1

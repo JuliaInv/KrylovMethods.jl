@@ -1,7 +1,7 @@
 @testset "MINRES" begin
 
 A = sprandn(10,10,0.1)
-A = A'*A + 4*speye(10)
+A = A'*A + 4*I
 Af = (v) -> A*v
 rhs = randn(10)
 rhst = copy(rhs)

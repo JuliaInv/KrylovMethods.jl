@@ -13,7 +13,7 @@ using LinearAlgebra
 	include("gmres.jl")
 	include("fgmres.jl")		
 	#include("lanczosBidiag.jl")
-	#include("ssor.jl")	
+	include("ssor.jl")	
 	#include("lsqr.jl")	
 	#include("lanczosTridiag.jl")
 	include("lanczos.jl")

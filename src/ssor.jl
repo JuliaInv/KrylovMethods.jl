@@ -25,9 +25,9 @@ Output:
 	iter    - number of iterations
 	resvec  - error at each iteration
 """
-function ssor(A::SparseMatrixCSC,b::Vector;x::Vector=[],tol::Real=1e-2,maxIter::Int=1,omega::Real=1.0,out::Int=0,storeInterm::Bool=false;)
+function ssor(A::SparseMatrixCSC,b::Vector;x::Vector=[],tol::Real=1e-2,maxIter::Int=1,omega::Real=1.0,out::Int=0,storeInterm::Bool=false)
 n      = length(b)
-OmInvD = omega./diag(A)
+OmInvD = omega./Vector(diag(A))
 
 if storeInterm
     X = zeros(n,maxIter)	# allocate space for intermediates
@@ -46,9 +46,9 @@ if out==2
 end
 
 resvec = zeros(maxIter)
-iter   = 0
+iter   = 1
 flag   = -1
-for iter = 1:maxIter
+while iter < maxIter
 	ssorPrec!(A,x,r,OmInvD)
 	if storeInterm; X[:,iter] = x; end
 	resvec[iter] = norm(r)/rnorm0
@@ -56,6 +56,7 @@ for iter = 1:maxIter
 	if resvec[iter] < tol
 		flag=0; break
 	end
+	iter += 1;
 end
 
 if (flag==-1) && (out>=0)
@@ -90,7 +91,7 @@ end
  see also sor, which uses ssorPrec! in each iteration.
  WARNING: DO NOT USE AS PRECONDITIONER, SINCE THIS METHOD OVEWRITES THE VECTOR r
 """
-function ssorPrec!(A::SparseMatrixCSC,x::Vector,r::Vector,OmInvD::Vector=1./diag(A))
+function ssorPrec!(A::SparseMatrixCSC,x::Vector,r::Vector,OmInvD::Vector=1.0./Vector(diag(A)))
 
 dx = 0.0
 n  = length(x)
@@ -115,7 +116,7 @@ return x
 end
 
 """
-x = ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1./diag(A))
+x = ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1.0./diag(A))
 
 Applies SSOR steps to the linear systems A*X = B, for symmetric A. For efficiency, it works on the
 transpose of the matrix A.       
@@ -138,7 +139,7 @@ Example for solving A*X=B, when A is Sparse Symmtric Positive definite:
     PC(r) = (x[:]=0.0; return ssorPrecTrans!(A,x,r,d));
     y = KrylovMethods.cg(A,b,tol=1e-12,maxIter=200,M=PC,out=1)[1]
 """
-function ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1./diag(A))
+function ssorPrecTrans!(A::SparseMatrixCSC,X::Array,B::Array,OmInvD::Vector=1.0./diag(A))
 
 r    = 0.0
 n    = size(X,1)

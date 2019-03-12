@@ -1,19 +1,18 @@
 
 @testset "bicgstb" begin
 	@testset "real matrix" begin
-		A  = sprandn(100,100,.1) + sparse(10.0I,100,100)
-		D  = Vector(diag(A))
+		A  = sprandn(100,100,.1) + 10*I
+		D  = Array(diag(A))
 		Af = x -> A*x 
-		M  = x -> x./D
+		M  = x -> D.\x
 		rhs = randn(100)
 		
 		# test flag for early stopping
 		xt = bicgstb(A,rhs,tol=1e-6,maxIter=3,out=2,storeInterm=true)
 		@test xt[2]==-1
-
+		
 		# test handling of zero rhs
 		xt = bicgstb(A,zeros(size(A,2)),tol=1e-6,maxIter=3,out=2)
-
 		@test  all(xt[1].==0)
 		@test xt[2]==-9
 		
@@ -34,10 +33,10 @@
 		@test norm(x0[1]-x1[1])/norm(x1[1]) < 1e-5
 	end
 	@testset "complex matrix" begin
-		A  = sprandn(100,100,.1) + sparse(10.0I,100,100) + im*(sprandn(100,100,.1) + sparse(10.0I,100,100) )
-		D  = Vector(diag(A))
+		A  = sprandn(100,100,.1) + 10*I + im*(sprandn(100,100,.1) + 10*I )
+		D  = Array(diag(A))
 		Af = x -> A*x 
-		M  = x -> x./D
+		M  = x -> D.\x
 		rhs = randn(100) + 1im * randn(100)
 		
 		x1 = bicgstb(A,rhs,tol=1e-6)

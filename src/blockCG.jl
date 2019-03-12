@@ -1,8 +1,8 @@
 export blockCG
 
 function blockCG(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...) where {T1,T2}
-	AV = zeros(promote_type(T1,T2),size(A,2),size(B,2)) # pre-allocate
-	return blockCG(V -> mul!(AV,A,V,1.0,0.0),B;kwargs...) # multiply with transpose of A for efficiency
+	X = zeros(promote_type(T1,T2),size(A,2),size(B,2)) # pre-allocate
+	return blockCG(V -> mul!(X,A,V,1.0,0.0),B;kwargs...) # multiply with transpose of A for efficiency
 end
 
 blockCG(A,B::Array;kwargs...) = blockCG(X -> A*X,B;kwargs...)
@@ -44,7 +44,7 @@ Reference:
 	Linear Algebra and Its Applications, 29, 293–322. http://doi.org/10.1016/0024-3795(80)90247-5
 
 """
-function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)  where T <: AbstractFloat
+function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false) where {T<:AbstractFloat}
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 
@@ -75,9 +75,8 @@ PTR = zeros(T,nrhs,nrhs)
 QTZ = zeros(T,nrhs,nrhs)
 
 flag = -1;
-iter = 0
-while iter < maxIter
-	iter+=1;
+iter = 1
+while iter <= maxIter
 	Q = A(P)
     # PTQ   = P'*Q
 	BLAS.gemm!('T','N',1.0,P,Q,0.0,PTQ)
@@ -115,8 +114,10 @@ while iter < maxIter
     if ortho
         P,     =  mgs!(P)
  	end
-	
+	iter += 1
 end
+iter = min(iter,maxIter)
+
 if out>=0
 	if flag==-1
 		println(@sprintf("blockCG iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",																							maxIter,maximum(resmat[iter,:]),tol))

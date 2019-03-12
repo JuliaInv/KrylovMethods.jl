@@ -1,11 +1,11 @@
 export lanczosBidiag
 
-function lanczosBidiag{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}, k::Int) 
+function lanczosBidiag(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}, k::Int) where {T1,T2}
 	T  = promote_type(T1,T2)
 	x1 = zeros(T,size(A,1))
 	x2 = zeros(T,size(A,2))
 	
-	Af(x,flag) = (flag=='F') ? A_mul_B!(1.0,A,x,0.0,x1) : At_mul_B!(1.0,A,x,0.0,x2)
+	Af(x,flag) = (flag=='F') ? mul!(x1,A,x,1.0,0.0) : mul!(x2,transpose(A),x,1.0,0.0)
 	return lanczosBidiag(Af,b,k)
 end
 
@@ -69,7 +69,8 @@ function lanczosBidiag(A::Function,p::Vector,k::Int)
 		B[i,1]   = beta
 		U[:,i+1] = u
 	end
-	
-	B = spdiagm((B[:,1],B[:,2]),[-1,0],k+1,k)
+	II,JJ,VV = SparseArrays.spdiagm_internal(-1=>B[:,1], 0=>B[:,2])
+	B = sparse(II,JJ,VV,k+1,k)
+	# Bt = spdiagm((B[:,1],B[:,2]),[-1,0],k+1,k)
 	return U, B, V
 end

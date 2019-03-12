@@ -1,6 +1,7 @@
-export fgmres
+
 import Base.isempty
 using LinearAlgebra
+export fgmres
 
 function fgmres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},restrt::Int; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,1))

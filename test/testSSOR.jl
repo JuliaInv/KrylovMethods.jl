@@ -21,9 +21,9 @@
 		omega = 1.2;
 		A = getDivGrad(32,32,32)
 		rhs = randn(size(A,1))
-		d = omega./diag(A);
+		d = omega./Array(diag(A));
 		x = zeros(length(rhs)) # pre allocation for the preconditioner result.
-		PC = r -> (x[:]=0.0; return ssorPrecTrans!(A,x,r,d));
+		PC = r -> (x[:].=0.0; return ssorPrecTrans!(A,x,r,d));
 		y = KrylovMethods.cg(A,rhs,tol=1e-12,maxIter=200,M=PC,out=1)[1]
 		@test norm(A*y-rhs)/norm(rhs) <= 1e-12
 	end
@@ -32,7 +32,7 @@
 		
 		# CG: test sparse Laplacian
 		A = getDivGrad(32,32,32) 
-		A += 1im*speye(size(A,1))
+		A += 1im*I
 		rhs = randn(size(A,1)) + 1im * randn(size(A,1))
 		tol = 1e-2
 		

@@ -1,4 +1,6 @@
-
+using KrylovMethods
+using Test
+using LinearOperators
 include("getDivGrad.jl")
 
 @testset "blockCG" begin

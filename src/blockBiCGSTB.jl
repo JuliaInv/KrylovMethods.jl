@@ -4,10 +4,12 @@ export blockBiCGSTB
 function blockBiCGSTB(A::SparseMatrixCSC{T1,Int},b::Array{T2,2}; kwargs...) where {T1,T2}
 	TYPE = promote_type(T1,T2);
 	Ax = zeros(TYPE,size(b));                
+	# return blockBiCGSTB(x -> A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax),b;kwargs...);
 	return blockBiCGSTB(x -> mul!(Ax,A,x,one(TYPE),zero(TYPE)),b;kwargs...); 
 end
-#A_mul_B!(one(TYPE),A,x,zero(TYPE),Ax) -> mul!(Ax,A,x,one(TYPE),zero(TYPE))
+
 blockBiCGSTB(A,b; kwargs...) =  blockBiCGSTB(x -> A*x,b; kwargs...)
+
 
 """
 x,flag,err,iter,resvec = blockBiCGSTB(A,b,tol=1e-6,maxIter=100,M1=identity,M2=identity,x=[],out=0)
@@ -42,7 +44,7 @@ Output:
   iter    - number of iterations
   resvec  - error at each iteration
 """
-function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0) where T 
+function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100, M1=identity, M2=identity,x::Array=[],out::Int=0) where {T}
 
 	n   = size(b,1);
 	m   = size(b,2);
@@ -71,7 +73,7 @@ function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100
 	end
 	v 	= zeros(T,n,m);
     p   = copy(r);   
-
+	
 	resvec = zeros(maxIter+1)
 	bnrm2 = norm( b )
 	
@@ -80,7 +82,6 @@ function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100
 	
 	alpha = 1.0
 	omega = 1.0
-	
 	
 	flag = -1
 	rho1 = 0.0
@@ -91,10 +92,8 @@ function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100
 	end
 	RtV = [];
 	t = [];
-	iter = 0;
-	while iter < maxIter
-		
-		iter+=1;
+	iter = 1
+	while iter <= maxIter
 		rho = BLAS.gemm('C','N', constOne, r_tld, r); 				# equivalent to rho   = r_tld'*r;
 		
 		if ( norm(rho) < 1e-13 ); flag = -2; break; end
@@ -146,8 +145,10 @@ function blockBiCGSTB(A::Function, b::Array{T}; tol::Real=1e-6, maxIter::Int=100
 			flag = 0; break
 		end
 		if norm(omega) < 1e-16; flag = -4; break; end
-
+		iter += 1
 	end
+	iter = min(iter,maxIter)
+	
 	if out>=0
 		if flag==-1
 			println(@sprintf("blockBiCGSTB iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",

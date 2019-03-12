@@ -2,12 +2,10 @@ export cg
 
 
 function cg(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2}
-	Av = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
-	return cg(v -> mul!(Av,A,v,1.0,0.0),b;kwargs...) # multiply with transpose of A for efficiency
+	x = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
+	# return cg(v -> At_mul_B!(1.0,A,v,0.0,x),b;kwargs...) # multiply with transpose of A for efficiency
+	return cg(v -> mul!(x,A,v,1.0,0.0),b;kwargs...) # multiply with transpose of A for efficiency
 end
-
-#A_mul_B!(1.0,A,x,0.0,Ax) -> mul!(Ax,A,x,1.0,0.0)
-
 
 cg(A,b::Vector;kwargs...) = cg(x -> A*x,b;kwargs...)
 
@@ -65,11 +63,10 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 	end
 	
 	resvec = zeros(maxIter)
-	iter   = 0 # makes iter available outside the loop
 	flag   = -1
 	
-	while iter < maxIter
-		iter+=1;
+	iter   = 1 
+	while iter <= maxIter
 		Ap = A(p)
 		gamma = dot(r,z)
 		alpha = gamma/dot(p,Ap)
@@ -94,9 +91,9 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 		# the following two lines are equivalent to p = z + beta*p
 		p = BLAS.scal!(n,beta,p,1)
 		p = BLAS.axpy!(n,1.0,z,1,p,1)
-
+		iter += 1
 	end
-	
+	iter = min(iter,maxIter)
 	if out>=0
 		if flag==-1
 			println(@sprintf("cg iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",

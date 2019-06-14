@@ -1,13 +1,13 @@
 environment:
   matrix:
-  - julia_version: 0.7
-  - julia_version: 1
+  - julia_version: 1.0
+  - julia_version: 1.1
   - julia_version: nightly
 
 platform:
   - x86 # 32-bit
   - x64 # 64-bit
-  
+
 install:
   - ps: iex ((new-object net.webclient).DownloadString("https://raw.githubusercontent.com/JuliaCI/Appveyor.jl/version-1/bin/install.ps1"))
 

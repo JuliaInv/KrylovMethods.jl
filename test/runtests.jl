@@ -1,6 +1,5 @@
 using KrylovMethods
 using Test
-using MatrixDepot
 using LinearOperators
 using SparseArrays
 using LinearAlgebra
@@ -21,6 +20,6 @@ include("testLANCZOS.jl")
 include("testSSOR.jl")
 include("testLSQR.jl")
 include("testMINRES.jl")
-include("testMatrixDepot.jl")
+# include("testMatrixDepot.jl")
 
 end

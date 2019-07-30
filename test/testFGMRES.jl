@@ -5,12 +5,12 @@ println("*******************************************************")
 		A  = sprandn(100,100,.1) + SparseMatrixCSC(10.0I, 100, 100)
 		n  = size(A,2)
 		D  = diag(A)
-		M2 = x -> D.\x
+		M2 = x -> Vector(D.\x)
 		rhs = randn(100)
 		tol = 1e-6;
 		
 		# test printing and behaviour for early stopping
-		xtt = fgmres(A,rhs ,3,tol=1e-10,maxIter=3,out=2,storeInterm=true)
+		xtt = fgmres(A,rhs ,3,tol=1e-12,maxIter=3,out=2,storeInterm=true)
 		@test xtt[2]==-1
 		
 		# test behaviour for zero rhs
@@ -22,8 +22,8 @@ println("*******************************************************")
 
 		
 		x1 = fgmres(A,rhs ,5,tol=tol,maxIter=100,out=1)
-		x3 = fgmres(A,rhs,5,tol=tol,maxIter=100,x=randn(size(rhs)))
-		x4 = fgmres(A,rhs,5,tol=tol,maxIter=100,M=M2)
+		x3 = fgmres(A,rhs,5,tol=tol,maxIter=100,x=randn(size(rhs)),flexible = true)
+		x4 = fgmres(A,rhs,5,tol=tol,maxIter=100,M=M2,flexible = true)
 		
 		@test norm(A*x1[1]-rhs)/norm(rhs) < tol
 		@test norm(A*x3[1]-rhs)/norm(rhs) < tol

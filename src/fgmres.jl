@@ -15,11 +15,11 @@ mutable struct FGMRESmem
 	Z				::Array
 end
 
-function getFGMRESmem(n::Int,flexible::Bool,T::Type,k::Int)
+function getFGMRESmem(n::Int,flexible::Bool,T::Type,k::Int,nrhs::Int=1)
 	if flexible
-		return FGMRESmem(zeros(T,n,k),zeros(T,n,k));
+		return FGMRESmem(zeros(T,n,k*nrhs),zeros(T,n,k*nrhs));
 	else
-		return FGMRESmem(zeros(T,n,k),zeros(T,0));
+		return FGMRESmem(zeros(T,n,k*nrhs),zeros(T,0));
 	end
 end
 
@@ -31,14 +31,14 @@ function isempty(mem::FGMRESmem)
 	return size(mem.V,1)==0;
 end
 
-function checkMemorySize(mem::FGMRESmem,n::Int,k::Int,TYPE::Type,flexible::Bool)
+function checkMemorySize(mem::FGMRESmem,n::Int,k::Int,TYPE::Type,flexible::Bool,nrhs::Int=1)
 	if isempty(mem)
 		# warn("Allocating memory in FGMRES")
-		mem = getFGMRESmem(n,flexible,TYPE,k);
+		mem = getFGMRESmem(n,flexible,TYPE,k,nrhs);
 		return mem
 	else
-		if size(mem.V,2)!= k
-			error("FGMRES: size of Krylov subspace is different than inner");
+		if size(mem.V,2)!= k*nrhs
+			error("FGMRES: size of Krylov subspace is different than inner*nrhs");
 		end
 	end
 end
@@ -71,7 +71,7 @@ flag    - exit flag (  0 : desired tolerance achieved,
 	iter    - number of iterations
 	resvec  - norm of relative residual at each iteration
 	
-	preconditioner M(r) must return a copy of a vector. Cannot reuse memory of 
+	preconditioner M(r) must return a copy of a vector. Cannot reuse memory of r.
 	"""
 function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=t->copy(t),x::Vector=[],out::Int=0,storeInterm::Bool=false,flexible::Bool=false,mem::FGMRESmem =  getEmptyFGMRESmem())
   # initialization
@@ -91,7 +91,8 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
   elseif norm(x) < eps(real(TYPE))
 	r = copy(b);
   else
-	r = b-A(x);
+	r = copy(b);
+	r.-=A(x);
   end
   
   if eltype(b) <: Complex 
@@ -214,8 +215,9 @@ function fgmres(A::Function,b::Vector,restrt::Int; tol::Real=1e-2,maxIter::Int=1
 			flag = 0;
 			break
 		end
-		if maxIter > 1
-			r = b - A(x);
+		if iter < maxIter
+			r = copy(b);
+			r.-=A(x);
 			betta = norm(r)
 		end
 		# if out==2; print(@sprintf("\t %1.1e\n", err)); end

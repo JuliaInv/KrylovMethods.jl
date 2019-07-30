@@ -13,6 +13,7 @@ module KrylovMethods
 	include("blockBiCGSTB.jl")
 	include("gmres.jl")	
 	include("fgmres.jl")	
+	include("blockFGMRES.jl")	
 	include("lanczosBidiag.jl")
 	include("ssor.jl")	
 	include("lsqr.jl")	

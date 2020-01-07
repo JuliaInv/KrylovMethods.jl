@@ -50,6 +50,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 	end	
 	z = M(r)
 	p = copy(z)
+	One = one(eltype(b));
     
     if storeInterm
         X = zeros(n,maxIter)	# allocate space for intermediates
@@ -90,7 +91,7 @@ function cg(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,M::Function=i
 		beta = dot(z,r)/gamma
 		# the following two lines are equivalent to p = z + beta*p
 		p = BLAS.scal!(n,beta,p,1)
-		p = BLAS.axpy!(n,1.0,z,1,p,1)
+		p = BLAS.axpy!(n,One,z,1,p,1)
 		iter += 1
 	end
 	iter = min(iter,maxIter)

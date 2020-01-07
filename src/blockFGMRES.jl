@@ -33,14 +33,14 @@ Output:
 
 x       - approximate solution
 flag    - exit flag (  0 : desired tolerance achieved,
-	-1 : maxIter reached without converging
-	-9 : right hand side was zero)
-	err     - norm of relative residual, i.e., norm(A*x-b)/norm(b)
-	iter    - number of iterations
-	resvec  - norm of relative residual at each iteration
+-1 : maxIter reached without converging
+-9 : right hand side was zero)
+err     - norm of relative residual, i.e., norm(A*x-b)/norm(b)
+iter    - number of iterations
+resvec  - norm of relative residual at each iteration
 	
-	preconditioner M(r) must return a copy of a matrix. Cannot reuse memory of r.
-	"""
+preconditioner M(r) must return a copy of a matrix. Cannot reuse memory of r.
+"""
 function blockFGMRES(A::Function,B::Array,restrt::Int; tol::Real=1e-2,maxIter::Int=100,M::Function=t->copy(t),X::Array=[],out::Int=0,flexible::Bool=false,mem::FGMRESmem =  getEmptyFGMRESmem())
   # initialization
   n  = size(B,1)

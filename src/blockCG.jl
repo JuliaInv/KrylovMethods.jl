@@ -48,6 +48,8 @@ function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 
+One = one(T);
+Zero = zero(T);
 R = copy(B)
 Z = M(R)
 if ortho
@@ -79,18 +81,18 @@ iter = 1
 while iter <= maxIter
 	Q = A(P)
     # PTQ   = P'*Q
-	BLAS.gemm!('T','N',1.0,P,Q,0.0,PTQ)
+	BLAS.gemm!('T','N',One,P,Q,Zero,PTQ)
 
     # Alpha = (PTQ)\(P'*R);
-    BLAS.gemm!('T','N',1.0,P,R,0.0,PTR)
+    BLAS.gemm!('T','N',One,P,R,Zero,PTR)
 	pinvPTQ = getPinv!(PTQ,pinvTol)
     Alpha = pinvPTQ*PTR
 
     # X     += P*Alpha
-    BLAS.gemm!( 'N','N',1.0, P, Alpha, 1.0, X)
+    BLAS.gemm!( 'N','N',One, P, Alpha, One, X)
 	if storeInterm; Xout[:,:,iter] = X; end
     # R     -= Q*Alpha
-    BLAS.gemm!('N','N',-1.0,Q,Alpha,1.0,R)
+    BLAS.gemm!('N','N',-One,Q,Alpha,One,R)
 
     resmat[iter,:] = computeNorm(R)./nB
     if out==2
@@ -103,12 +105,12 @@ while iter <= maxIter
 
     Z     = M(R)
     #Beta  = -(PTQ)\(Q'*Z);
-	BLAS.gemm!('T','N',1.0,Q,Z,0.0,QTZ)
+	BLAS.gemm!('T','N',One,Q,Z,0.0,QTZ)
     Beta  = -pinvPTQ*QTZ
 
 	# Z might be just R here - don't overwite it! Q is not needed.
 	Q[:] = Z;
-	BLAS.gemm!('N','N',1.0,P,Beta,1.0,Q);
+	BLAS.gemm!('N','N',One,P,Beta,One,Q);
 	P[:] = Q;
 
     if ortho

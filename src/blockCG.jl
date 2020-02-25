@@ -44,7 +44,7 @@ Reference:
 	Linear Algebra and Its Applications, 29, 293–322. http://doi.org/10.1016/0024-3795(80)90247-5
 
 """
-function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false) where {T<:AbstractFloat}
+function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(real(T))*size(B,1),out::Int=0,storeInterm::Bool=false) where T
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 
@@ -105,7 +105,7 @@ while iter <= maxIter
 
     Z     = M(R)
     #Beta  = -(PTQ)\(Q'*Z);
-	BLAS.gemm!('T','N',One,Q,Z,0.0,QTZ)
+	BLAS.gemm!('T','N',One,Q,Z,Zero,QTZ)
     Beta  = -pinvPTQ*QTZ
 
 	# Z might be just R here - don't overwite it! Q is not needed.
@@ -139,7 +139,7 @@ function computeNorm(R)
 	res    = zeros(nrhs)
 	for k=1:nrhs
 		for i=1:n
-			res[k]+=R[i,k]*R[i,k]
+			res[k]+=real(conj(R[i,k])*R[i,k])
 		end
 	end
 	return sqrt.(res)

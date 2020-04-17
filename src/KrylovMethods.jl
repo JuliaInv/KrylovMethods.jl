@@ -21,4 +21,5 @@ module KrylovMethods
 	include("lanczos.jl")
 	include("minres.jl")
 	include("gs.jl")
+	include("qmr.jl")
 end

@@ -1,6 +1,10 @@
 module KrylovMethods
+
+	using LinearAlgebra
+	using SparseArrays
+	using Printf
 	
-	import Base.BLAS
+	import LinearAlgebra.BLAS
 	
 	include("cg.jl")
 	include("blockCG.jl")
@@ -8,6 +12,8 @@ module KrylovMethods
 	include("bicgstb.jl")
 	include("blockBiCGSTB.jl")
 	include("gmres.jl")	
+	include("fgmres.jl")	
+	include("blockFGMRES.jl")	
 	include("lanczosBidiag.jl")
 	include("ssor.jl")	
 	include("lsqr.jl")	

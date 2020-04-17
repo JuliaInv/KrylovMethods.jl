@@ -1,11 +1,12 @@
 export cgls
 
-function cgls{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) 
+function cgls(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2}
     T  = promote_type(T1,T2)
     x1 = zeros(T,size(A,1))
     x2 = zeros(T,size(A,2))
     
-    Af(x,flag) = (flag=='F') ? A_mul_B!(1.0,A,x,0.0,x1) : At_mul_B!(1.0,A,x,0.0,x2)
+    # Af(x,flag) = (flag=='F') ? A_mul_B!(1.0,A,x,0.0,x1) : At_mul_B!(1.0,A,x,0.0,x2)
+    Af(x,flag) = (flag=='F') ? mul!(x1,A,x,1.0,0.0) : mul!(x2,transpose(A),x,1.0,0.0)
     return cgls(Af,b;kwargs...)
 end
 
@@ -73,8 +74,8 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
         println(@sprintf("%4s\t%8s\t%8s\t%8s","iter","|A'r|","norm(r)","norm(x)"))
     end
     
-    iter = 1 # makes iter available outside the loop
-    for iter=1:maxIter
+    iter = 1
+    while iter <= maxIter
         q     = A(p,'F') # compute A*g
         alpha = normSc/BLAS.dot(m,q,1,q,1)
         BLAS.axpy!(n,alpha,p,1,x,1) # faster than x    += alpha*p
@@ -104,7 +105,9 @@ function cgls(A::Function,b::Vector; tol::Real=1e-2,maxIter::Int=100,x::Vector=[
         eta[iter] = BLAS.nrm2(m,r,1) # faster than norm(r)
         rho[iter] = BLAS.nrm2(n,x,1) # faster than norm(x)
         if out==2;  println(@sprintf("%3d\t%1.2e\t%1.2e\t%1.2e",iter,Arn[iter],rho[iter],eta[iter]));end
+		iter += 1
     end
+	iter = min(iter,maxIter)
     
     if out>=0
         if flag==-1

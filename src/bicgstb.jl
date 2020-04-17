@@ -1,8 +1,9 @@
 export bicgstb
 
-function bicgstb{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) 
+function bicgstb(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2}
 	Ax = zeros(promote_type(T1,T2),size(A,2))                  # pre-allocate
-	return bicgstb(x -> A_mul_B!(1.0,A,x,0.0,Ax),b;kwargs...) # multiply with transpose of A for efficiency
+	# return bicgstb(x -> A_mul_B!(1.0,A,x,0.0,Ax),b;kwargs...) # multiply with transpose of A for efficiency
+	return bicgstb(x -> mul!(Ax,A,x,1.0,0.0),b;kwargs...) # multiply with transpose of A for efficiency
 end
 
 bicgstb(A,b; kwargs...) =  bicgstb(x -> A*x,b; kwargs...)
@@ -66,7 +67,6 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 	omega = 1.0
 	r_tld = copy(r)
 	
-	iter = 1
 	flag = -1
 	rho1 = 0.0
 	p   = copy(r)
@@ -74,7 +74,8 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		println("=== bicgstb ===")
 		println(@sprintf("%4s\t%7s","iter","relres"))
 	end
-	for iter = 1:maxIter
+	iter = 1
+	while iter <= maxIter
 		rho   = dot(r_tld,r)
 		if ( abs(rho) < tolRho ); flag = -2; break; end
 		
@@ -124,7 +125,10 @@ function bicgstb(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M1=x-
 		
 		if norm(omega) < 1e-16; flag = -4; break; end
 		rho1 = rho
+		iter += 1
 	end
+	iter = min(iter,maxIter)
+	
 	if out>=0
 		if flag==-1
 			println(@sprintf("bicgstb iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",

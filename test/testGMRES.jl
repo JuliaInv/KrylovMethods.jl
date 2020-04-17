@@ -2,9 +2,9 @@
 
 @testset "gmres" begin
 	@testset "real matrix" begin
-		A  = sprandn(100,100,.1) + 10*speye(100)
+		A  = sprandn(100,100,.1) + 10*I
 		n  = size(A,2)
-		D  = diag(A)
+		D  = Array(diag(A))
 		M2 = x -> D.\x
 		rhs = randn(100)
 		tol = 1e-6;
@@ -33,8 +33,8 @@
 	end
 
 	@testset "complex matrix" begin
-		A  = sprandn(100,100,.1) + 10*speye(100) + im*(sprandn(100,100,.1) + 10*speye(100) )
-		D  = diag(A)
+		A  = sprandn(100,100,.1) + 10*I + im*(sprandn(100,100,.1) + 10*I )
+		D  = Array(diag(A))
 		M3 = x -> D.\x
 		rhs = complex(randn(100))
 		tol = 1e-6;

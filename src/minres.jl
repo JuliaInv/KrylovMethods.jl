@@ -47,9 +47,9 @@ export minres
   conA    - condition number estimate
   phi     - relres for each iteration
 """
-function minres{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) 
+function minres(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2}
 	x = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
-	return minres(v -> At_mul_B!(1.0,A,v,0.0,x),b;kwargs...) # multiply with transpose of A for efficiency
+	return minres(v -> mul!(x,transpose(A),v,1.0,0.0),b;kwargs...) # multiply with transpose of A for efficiency
 end
 
 minres(A,b::Vector;kwargs...) = minres(x -> A*x,b::Vector;kwargs...)
@@ -105,9 +105,9 @@ function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=
     end
     flag = -1
  
-    k = 2
     nrmA = alpha[1]*beta[2]
-    for k=2:maxIter+1
+	k = 2
+    while k <= maxIter+1
         alpha[k],beta[k+1],vk,vkm1 = LanczosStep!(A,vk,vkm1,beta[k],sigma=sigma,tol=btol)
         
         if beta[k+1] < btol
@@ -157,7 +157,9 @@ function minres(A::Function,b::Vector;x=[],sigma=0.0,btol=1e-10,rtol=1e-10,gtol=
             flag = -3
             break
         end
+		k += 1
     end
+	k = min(k,maxIter+1)
     if out>=0
         if flag==-1
             println(@sprintf("minres iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",

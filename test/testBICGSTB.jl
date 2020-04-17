@@ -1,8 +1,8 @@
 
 @testset "bicgstb" begin
 	@testset "real matrix" begin
-		A  = sprandn(100,100,.1) + 10*speye(100)
-		D  = diag(A)
+		A  = sprandn(100,100,.1) + 10*I
+		D  = Array(diag(A))
 		Af = x -> A*x 
 		M  = x -> D.\x
 		rhs = randn(100)
@@ -17,7 +17,7 @@
 		@test xt[2]==-9
 		
 		
-		x0 = bicgstb(full(A),rhs,tol=1e-6)
+		x0 = bicgstb(Matrix(A),rhs,tol=1e-6)
 		x1 = bicgstb(A,rhs,tol=1e-6,out=1)
 		x2 = bicgstb(Af,rhs,tol=1e-6)
 		x3 = bicgstb(Af,rhs,tol=1e-6,maxIter=100,x=randn(size(rhs)))
@@ -33,8 +33,8 @@
 		@test norm(x0[1]-x1[1])/norm(x1[1]) < 1e-5
 	end
 	@testset "complex matrix" begin
-		A  = sprandn(100,100,.1) + 10*speye(100) + im*(sprandn(100,100,.1) + 10*speye(100) )
-		D  = diag(A)
+		A  = sprandn(100,100,.1) + 10*I + im*(sprandn(100,100,.1) + 10*I )
+		D  = Array(diag(A))
 		Af = x -> A*x 
 		M  = x -> D.\x
 		rhs = randn(100) + 1im * randn(100)

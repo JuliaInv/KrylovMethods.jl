@@ -1,8 +1,8 @@
 export blockCG
 
-function blockCG{T1,T2}(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...)
+function blockCG(A::SparseMatrixCSC{T1,Int},B::Array{T2,2}; kwargs...) where {T1,T2}
 	X = zeros(promote_type(T1,T2),size(A,2),size(B,2)) # pre-allocate
-	return blockCG(V -> At_mul_B!(1.0,A,V,0.0,X),B;kwargs...) # multiply with transpose of A for efficiency
+	return blockCG(V -> mul!(X,A,V,1.0,0.0),B;kwargs...) # multiply with transpose of A for efficiency
 end
 
 blockCG(A,B::Array;kwargs...) = blockCG(X -> A*X,B;kwargs...)
@@ -44,10 +44,12 @@ Reference:
 	Linear Algebra and Its Applications, 29, 293–322. http://doi.org/10.1016/0024-3795(80)90247-5
 
 """
-function blockCG{T<:AbstractFloat}(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(T)*size(B,1),out::Int=0,storeInterm::Bool=false)
+function blockCG(A::Function,B::Array{T};X=zeros(T,size(B)),M::Function=identity,maxIter=20,tol=1e-2,ortho::Bool=false,pinvTol =eps(real(T))*size(B,1),out::Int=0,storeInterm::Bool=false) where T
 
 if norm(B)==0; return zeros(eltype(B),size(B)),-9,0.0,0,[0.0]; end
 
+One = one(T);
+Zero = zero(T);
 R = copy(B)
 Z = M(R)
 if ortho
@@ -75,22 +77,22 @@ PTR = zeros(T,nrhs,nrhs)
 QTZ = zeros(T,nrhs,nrhs)
 
 flag = -1;
-iter = 0
-for iter=1:maxIter
+iter = 1
+while iter <= maxIter
 	Q = A(P)
     # PTQ   = P'*Q
-	BLAS.gemm!('T','N',1.0,P,Q,0.0,PTQ)
+	BLAS.gemm!('T','N',One,P,Q,Zero,PTQ)
 
     # Alpha = (PTQ)\(P'*R);
-    BLAS.gemm!('T','N',1.0,P,R,0.0,PTR)
+    BLAS.gemm!('T','N',One,P,R,Zero,PTR)
 	pinvPTQ = getPinv!(PTQ,pinvTol)
     Alpha = pinvPTQ*PTR
 
     # X     += P*Alpha
-    BLAS.gemm!( 'N','N',1.0, P, Alpha, 1.0, X)
+    BLAS.gemm!( 'N','N',One, P, Alpha, One, X)
 	if storeInterm; Xout[:,:,iter] = X; end
     # R     -= Q*Alpha
-    BLAS.gemm!('N','N',-1.0,Q,Alpha,1.0,R)
+    BLAS.gemm!('N','N',-One,Q,Alpha,One,R)
 
     resmat[iter,:] = computeNorm(R)./nB
     if out==2
@@ -103,18 +105,21 @@ for iter=1:maxIter
 
     Z     = M(R)
     #Beta  = -(PTQ)\(Q'*Z);
-	BLAS.gemm!('T','N',1.0,Q,Z,0.0,QTZ)
+	BLAS.gemm!('T','N',One,Q,Z,Zero,QTZ)
     Beta  = -pinvPTQ*QTZ
 
 	# Z might be just R here - don't overwite it! Q is not needed.
 	Q[:] = Z;
-	BLAS.gemm!('N','N',1.0,P,Beta,1.0,Q);
+	BLAS.gemm!('N','N',One,P,Beta,One,Q);
 	P[:] = Q;
 
     if ortho
         P,     =  mgs!(P)
  	end
+	iter += 1
 end
+iter = min(iter,maxIter)
+
 if out>=0
 	if flag==-1
 		println(@sprintf("blockCG iterated maxIter (=%d) times but reached only residual norm %1.2e instead of tol=%1.2e.",																							maxIter,maximum(resmat[iter,:]),tol))
@@ -134,17 +139,17 @@ function computeNorm(R)
 	res    = zeros(nrhs)
 	for k=1:nrhs
 		for i=1:n
-			res[k]+=R[i,k]*R[i,k]
+			res[k]+=real(conj(R[i,k])*R[i,k])
 		end
 	end
 	return sqrt.(res)
 end
 
 function getPinv!(A,pinvTol)
-	SVD         = svdfact!(A)
+	SVD         = svd!(A)
 	Sinv        = zeros(length(SVD.S))
     index       = SVD.S .> pinvTol*maximum(SVD.S)
     Sinv[index] = 1.0./ SVD.S[index]
-    Sinv[find(.!isfinite.(Sinv))] = 0.0
+    Sinv[findall(.!isfinite.(Sinv))] .= 0.0
     return SVD.Vt'*Diagonal(Sinv)*SVD.U'
 end

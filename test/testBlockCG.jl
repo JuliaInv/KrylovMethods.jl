@@ -1,5 +1,5 @@
 using KrylovMethods
-using Base.Test
+using Test
 using LinearOperators
 include("getDivGrad.jl")
 

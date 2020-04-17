@@ -53,7 +53,8 @@ function lsqr(A::SparseMatrixCSC,b::Vector;kwargs...)
     # build function that is compatible with lsqr
     ATv = zeros(size(A,2)) # output for A'*x
     
-    Af(flag,x,a=0.0,v=ATv) = (flag=='F') ? A_mul_B!(1.0,A,x,a,v) : At_mul_B!(1.0,A,x,a,v)
+    # Af(flag,x,a=0.0,v=ATv) = (flag=='F') ? A_mul_B!(1.0,A,x,a,v) : At_mul_B!(1.0,A,x,a,v)
+    Af(flag,x,a=0.0,v=ATv) = (flag=='F') ? mul!(v,A,x,1.0,a) : mul!(v,transpose(A),x,1.0,a)
 
     return lsqr(Af,b;kwargs...)
     
@@ -61,7 +62,7 @@ end
 
 function lsqr(A::Any,b::Vector;kwargs...)
     # build function that is compatible with lsqr
-    Af(flag,x,a=0.0,v=0.0) = (flag=='F') ? A*x+a*v : A'*x+a*v
+    Af(flag,x,a=0.0,v=0.0) = (flag=='F') ? A*x.+a*v : A'*x.+a*v
 
     return lsqr(Af,b;kwargs...)
     
@@ -101,7 +102,6 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
     
     # (2) perform iteration
     # maxIter = min(maxIter,n,m)
-    iter = 1
     nBk  = 0.0
     nDk  = 0.0
     nres = beta
@@ -118,6 +118,7 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
         @printf "iter\t|r_k|\t\t|A'*r_k|\t|A|\t\tcond(A)\t\tSTOP\n"
     end
     flag = -1
+    iter = 1
     while iter<=maxIter
         # (3) continue the bidiagonalization
         u     = A('F',v,-alpha,u) # A*v - alpha*u
@@ -194,7 +195,9 @@ function lsqr(A::Function,b::Vector;x=[],maxIter=20,atol=1e-10,btol=1e-10,condli
     if doBidiag
         U = U[:,1:iter]
         V = V[:,1:iter-1]
-        B = spdiagm((bs[1:iter-1],as[1:iter-1]),-1:0,iter,iter-1)
+		I,J,V = SparseArrays.spdiagm_internal(-1=>bs[1:iter-1],0=>as[1:iter-1])
+		B = sparse(I,J,V,iter,iter-1)
+        # B = spdiagm((bs[1:iter-1],as[1:iter-1]),-1:0,iter,iter-1)
         return x, flag,his[1:iter-1,:],U,B,V
     else
         return x, flag,his[1:iter-1,:]

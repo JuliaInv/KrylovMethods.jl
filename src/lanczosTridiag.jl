@@ -32,9 +32,9 @@ Output:
  Tk    - sparse tridiagonal matrix
  Vk    - basis vectors
 """
-function lanczosTridiag{T1,T2}(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},k; kwargs...) 
+function lanczosTridiag(A::SparseMatrixCSC{T1,Int},b::Array{T2,1},k; kwargs...) where {T1,T2}
 	x = zeros(promote_type(T1,T2),size(A,2)) # pre-allocate
-	return lanczosTridiag(v -> At_mul_B!(1.0,A,v,0.0,x),b,k;kwargs...) # multiply with transpose of A for efficiency
+	return lanczosTridiag(v -> mul!(x,transpose(A),v,1.0,0.0),b,k;kwargs...) # multiply with transpose of A for efficiency
 end
 
 
@@ -56,8 +56,8 @@ beta[1] = norm(b)
 V[:,1]  = copy(b)/beta[1]
 u       = A(V[:,1])
 
-j = 1 # brings j to scope of function
-for j=1:k-1
+j = 1 
+while j <= k-1
     alpha[j] = dot(V[:,j],u)
     u        = u - alpha[j]*V[:,j]
     if doReorth # full re-orthogonalization
@@ -72,8 +72,11 @@ for j=1:k-1
         break
     end
     u = A(V[:,j+1]) - beta[j+1]*V[:,j]
+	j += 1
 end
-
-T = spdiagm((beta[2:j],alpha[1:j],beta[2:j]),-1:1,j,j)
+j = min(j,k-1)
+II,JJ,VV = SparseArrays.spdiagm_internal(-1=>beta[2:j],0=>alpha[1:j],1=>beta[2:j])
+# T = spdiagm((beta[2:j],alpha[1:j],beta[2:j]),-1:1,j,j)
+T = sparse(II,JJ,VV,j,j)
 return T,V[:,1:j]
 end

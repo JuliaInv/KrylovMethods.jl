@@ -26,7 +26,7 @@ x,flag, = cg(KKT,randn(3),out=1)
 A = getDivGrad(8,8,8)
 Alinop = LinearOperator(A)
 L = tril(A)
-D = diag(A)
+D = Array(diag(A))
 U = triu(A)
 n = size(A,1)
 JAC = (x) -> D.\x

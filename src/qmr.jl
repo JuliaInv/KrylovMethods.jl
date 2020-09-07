@@ -32,9 +32,16 @@ Output:
     resvec  :: Vector     - residual at each iteration.
 
 """
-function qmr(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M=x->copy(x),
-             x0::Vector=[],out::Int=0)
+function qmr(A::SparseMatrixCSC{T,Int},b::Array{T,1}; kwargs...) where {T}
+	Ax = zeros(T,size(A,2))                  # pre-allocate
+	return qmr(x -> mul!(Ax,A,x,1.0,0.0),b;kwargs...) 
+end
 
+qmr(A,b::Vector;kwargs...) = qmr(x -> A*x ,b;kwargs...)
+
+function qmr(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M=x->copy(x),
+             x::Vector=[],out::Int=0)
+	println("WARNING: QMR: this (new) funtion does not seem to work very well at the moment. Need to check algorithm correctness. ")
     n  = length(b)
     if norm(b)==0; return zeros(eltype(b),n),-9,0,0,zeros(1); end
     Mf = isa(M,Function) ? M : x -> M\x
@@ -45,19 +52,21 @@ function qmr(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M=x->copy
     s = zeros(eltype(b),n)
 
     # specify scalar
-    c_n      =  1.0
-    eps      =  1.0 + 0.0im
-    theta_n  =  0.0
-    eta      = -1.0 + 0.0im
+    c_n      =  one(eltype(b))
+    eps      =  one(eltype(b))
+    theta_n  =  zero(eltype(b))
+    eta      =  -one(eltype(b))
 
-    if isempty(x0)
-        x0 = zeros(eltype(b),n)
+    if isempty(x)
+        x = zeros(eltype(b),n)
         r  = copy(b)
     else
-		r  = b - A(x0)
+		r  = b - A(x)
     end
-
-    x = copy(x0)
+	
+	if eltype(b) <: Complex 
+       x = complex(x)
+    end
 
     resvec = zeros(maxIter+1)
     bnrm2 = norm( b )
@@ -110,11 +119,11 @@ function qmr(A::Function, b::Vector; tol::Real=1e-6, maxIter::Int=100, M=x->copy
         k2      = theta_nm * c_n
 
         # Update d:   d = eta * p + k2 * d
-        BLAS.scal!(n,one(eltype(d))*k2,d,1)     # k2 * d
+        BLAS.scal!(n,one(eltype(b))*k2,d,1)     # k2 * d
         BLAS.axpy!(n,eta,p,1,d,1)               # d = d + eta * p
 
         # Update x:  x = x + d
-        BLAS.axpy!(n,one(eltype(x)),d,1,x,1)
+        BLAS.axpy!(n,one(eltype(d)),d,1,x,1)
 
         # Update s:  s = eta * ap + k2 * s
         BLAS.scal!(n,one(eltype(s))*k2,s,1)     # k2 * s

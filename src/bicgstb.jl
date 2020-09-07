@@ -1,7 +1,7 @@
 export bicgstb
 
-function bicgstb(A::SparseMatrixCSC{T1,Int},b::Array{T2,1}; kwargs...) where {T1,T2}
-	Ax = zeros(promote_type(T1,T2),size(A,2))                  # pre-allocate
+function bicgstb(A::SparseMatrixCSC{T,Int},b::Array{T,1}; kwargs...) where {T}
+	Ax = zeros(T,size(A,2))                  # pre-allocate
 	# return bicgstb(x -> A_mul_B!(1.0,A,x,0.0,Ax),b;kwargs...) # multiply with transpose of A for efficiency
 	return bicgstb(x -> mul!(Ax,A,x,1.0,0.0),b;kwargs...) # multiply with transpose of A for efficiency
 end
